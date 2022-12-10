@@ -37,6 +37,9 @@ const int R = 9; //Radius of wheel
 const int N = 119; //Gemiddelde pings per rotatie
 const float pi = 3.14;
 
+// PeriSensor
+int periData = 0;
+int periPin = 11;
 
 
 void setup() {
@@ -66,9 +69,11 @@ void setup() {
   digitalWrite(wheelPin1, INPUT);
   digitalWrite(wheelPin2, INPUT);
 
+  // Get data from peri sensor
+  digitalWrite(periPin, INPUT);
+
   goForward(goSpeed, goSpeed2);
   
-  // attachInterrupt(digitalPinToInterrupt(wheelPin), readEncoder, FALLING);
 
 }
 
@@ -118,15 +123,16 @@ int getDistance2(){
 
 void loop() {
 
+  periData = digitalRead(periPin);
+  Serial.println("SensorData: " + String(periData));
   readEncoder();
-  if(getDistance1() >= 100){
-    getDistance2();
+  // if(getDistance1() >= 100){
+  //   getDistance2();
     
-    Serial.println("Distance1 in cm: " + String(getCounter1()));
-    Serial.println("Distance2 in cm: " + String(getCounter2()));
-    Stop();
-  }
-  // goForward(goSpeed);
+  //   Serial.println("Distance1 in cm: " + String(getCounter1()));
+  //   Serial.println("Distance2 in cm: " + String(getCounter2()));
+  //   Stop();
+  // }
 
   if(Serial.available() > 0) { // Checks whether data is comming form the serial port
     data = Serial.read(); //Reads the data from the serial port
