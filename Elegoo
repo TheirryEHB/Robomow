@@ -1,6 +1,7 @@
 
 int oldSpeed = 0;
 int goSpeed= 150;
+int goSpeed2 = 255;
 String receivedData = "";
 
 // Motor A connections
@@ -64,6 +65,8 @@ void setup() {
   // Get pings from wheel encoder
   digitalWrite(wheelPin1, INPUT);
   digitalWrite(wheelPin2, INPUT);
+
+  goForward(goSpeed, goSpeed2);
   
   // attachInterrupt(digitalPinToInterrupt(wheelPin), readEncoder, FALLING);
 
@@ -106,12 +109,10 @@ int getCounter2(){
 
 int getDistance1(){
   distance1 = ((2*pi*R)/N) * getCounter1();
-  // Serial.println("Distance in cm: " + String(distance));
   return distance1;
 }
 int getDistance2(){
   distance2 = ((2*pi*R)/N) * getCounter2();
-  // Serial.println("Distance in cm: " + String(distance));
   return distance2;
 }
 
@@ -120,9 +121,10 @@ void loop() {
   readEncoder();
   if(getDistance1() >= 100){
     getDistance2();
+    
+    Serial.println("Distance1 in cm: " + String(getCounter1()));
+    Serial.println("Distance2 in cm: " + String(getCounter2()));
     Stop();
-    Serial.println("Distance1 in cm: " + String(distance1));
-    Serial.println("Distance2 in cm: " + String(distance2));
   }
   // goForward(goSpeed);
 
@@ -131,19 +133,19 @@ void loop() {
     
     
       if(data == '1'){
-        rotateLeft(goSpeed);
+        rotateLeft(goSpeed, goSpeed2);
       }
       else if(data == '2'){
-        goForward(goSpeed);
+        goForward(goSpeed, goSpeed2);
       }
       else if(data == '3'){
-        rotateRight(goSpeed);
+        rotateRight(goSpeed, goSpeed2);
       }
       else if(data == '4'){
-        goBackward(goSpeed);
+        goBackward(goSpeed, goSpeed2);
       }
       else if(data == '5'){
-        goForward(goSpeed);
+        goForward(goSpeed, goSpeed2);
       }
       else if(data == '6'){
         Stop();
@@ -154,7 +156,7 @@ void loop() {
 
 /////////////////////////////////////////////////////////////////////////
 
-int speedVerify(int speed) {
+int speedVerify1(int speed) {
   if (speed < 0){
     speed = 0;
   }
@@ -164,78 +166,92 @@ int speedVerify(int speed) {
   return speed;
 }
 
+int speedVerify2(int speed1, int speed2){
+   if (speed2 < 0){
+    speed2 = 0;
+  }
+  if (speed2 > 255){
+    speed2 = 255;
+  }
+  return speed2;
+}
 
-void goForward(int motorSpeed){
+
+void goForward(int motorSpeed1, int motorSpeed2){
   digitalWrite(in1, HIGH);
   digitalWrite(in2, LOW);
   digitalWrite(in3, LOW);
   digitalWrite(in4, HIGH);
-  motorSpeed = speedVerify(motorSpeed);
-  analogWrite(enA, motorSpeed);
-  analogWrite(enB, 245);   
+  motorSpeed1 = speedVerify1(motorSpeed1);
+  motorSpeed2 = speedVerify2(motorSpeed1, motorSpeed2);
+  analogWrite(enA, motorSpeed1);
+  analogWrite(enB, motorSpeed2);   
   // Serial.print("forward:");
-  Serial.println(motorSpeed);
+  Serial.println(motorSpeed1);
+  Serial.println(motorSpeed2);
   
 }
 
-void goBackward(int motorSpeed){
+void goBackward(int motorSpeed1, int motorSpeed2){
   digitalWrite(in1, LOW);
   digitalWrite(in2, HIGH);
   digitalWrite(in3, HIGH);
   digitalWrite(in4, LOW);
-
-  motorSpeed = speedVerify(motorSpeed);
-  analogWrite(enA, motorSpeed);
-  analogWrite(enB, 245);
+  motorSpeed1 = speedVerify1(motorSpeed1);
+  motorSpeed2 = speedVerify2(motorSpeed1, motorSpeed2);
+  analogWrite(enA, motorSpeed1);
+  analogWrite(enB, motorSpeed2);
   // Serial.print("backward:");
   // Serial.println(motorSpeed);
 }
-void goRight(int motorSpeed){
+void goRight(int motorSpeed1, int motorSpeed2){
   digitalWrite(in1, HIGH);
   digitalWrite(in2, LOW);
   digitalWrite(in3, LOW);
   digitalWrite(in4, HIGH);
-  motorSpeed = speedVerify(motorSpeed);
-  analogWrite(enA, motorSpeed);
-  analogWrite(enB, motorSpeed/2);
+  motorSpeed1 = speedVerify1(motorSpeed1);
+  motorSpeed2 = speedVerify2(motorSpeed1, motorSpeed2);
+  analogWrite(enA, motorSpeed1);
+  analogWrite(enB, motorSpeed2/2);
   // Serial.print("right:");
   // Serial.println(motorSpeed);
   
 }
 
-void rotateRight(int motorSpeed){
+void rotateRight(int motorSpeed1, int motorSpeed2){
   digitalWrite(in1, HIGH);
   digitalWrite(in2, LOW);
   digitalWrite(in3, HIGH);
   digitalWrite(in4, LOW);
-  motorSpeed = speedVerify(motorSpeed);
-  analogWrite(enA, motorSpeed);
-  analogWrite(enB, motorSpeed);
+  motorSpeed1 = speedVerify1(motorSpeed1);
+  motorSpeed2 = speedVerify2(motorSpeed1, motorSpeed2);
+  analogWrite(enA, motorSpeed1);
+  analogWrite(enB, motorSpeed2);
   // bv
   
 }
 
 
-void goLeft(int motorSpeed){
+void goLeft(int motorSpeed1, int motorSpeed2){
   digitalWrite(in1, HIGH);
   digitalWrite(in2, LOW);
   digitalWrite(in3, LOW);
   digitalWrite(in4, HIGH);  
-  analogWrite(enA, motorSpeed/2);
-  analogWrite(enB, motorSpeed);
+  analogWrite(enA, motorSpeed1/2);
+  analogWrite(enB, motorSpeed2);
   Serial.print("left:");
-  Serial.println(motorSpeed);
+  Serial.println(motorSpeed1);
   
 }
-void rotateLeft(int motorSpeed){
+void rotateLeft(int motorSpeed1, int motorSpeed2){
   digitalWrite(in1, LOW);
   digitalWrite(in2, HIGH);
   digitalWrite(in3, LOW);
   digitalWrite(in4, HIGH);  
-  analogWrite(enA, motorSpeed);
-  analogWrite(enB, motorSpeed);
+  analogWrite(enA, motorSpeed1);
+  analogWrite(enB, motorSpeed2);
   Serial.print("rotate left:");
-  Serial.println(motorSpeed);
+  Serial.println(motorSpeed1);
   
 }
 
