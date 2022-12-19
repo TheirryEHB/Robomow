@@ -1,35 +1,32 @@
 
 int oldSpeed = 0;
-int goSpeed= 150;
-int goSpeed2 = 255;
-String receivedData = "";
+int goSpeed= 150; // Snelheid motor 1
+int goSpeed2 = 255; // Snelheid motor 2
 
-// Motor A connections
+/* Motor A connections*/
 int enA = 2;
 int in1 = 3;
 int in2 = 4;
-// Motor B connections
+/* Motor B connections*/
 int enB = 5;
 int in3 = 6;
 int in4 = 7;
-int relaisPin = 8;
-int relaisStatus = 0;
+int relaisPin = 8; //Pin naar relay voor grasmaaier bladen
+int relaisStatus = 0; //Status relay
 
-const int analogInPin = A0;
+/*Bluetooth module*/
+ int data = 0; //Data van bluetooth module
 
-// Bluetooth module
- int data = 0;
-
-// Wheel Encoder
-int wheelPin1 = 9;
-int wheelPin2 = 10;
-int wheelPings1 = 0;
-int wheelPings2 = 0;
-int wheelPingsWhenStopped1 = 0;
-int wheelPingsWhenStopped2 = 0;
-int wheelData1 = 2;
-int wheelData2 = 2;
-int oldWheelData1 = 2;
+/* Wheel Encoder*/
+int wheelPin1 = 9; //Pin voor data wiel 1
+int wheelPin2 = 10; 
+int wheelPings1 = 0; // Aantal pings wiel 1
+int wheelPings2 = 0; 
+int wheelPingsWhenStopped1 = 0; // Aantal pings wanneer wiel 1 is gestopt
+int wheelPingsWhenStopped2 = 0; 
+int wheelData1 = 2; // Data weelencoder wiel 1
+int wheelData2 = 2; 
+int oldWheelData1 = 2; // Oude wieldata wiel 1 om zo te weten wanneer er nieuwe data binnen is gekomen
 int oldWheelData2 = 2;
 int distance1 = 0; // distance traveled by Robomow (for now: since activation)
 int distance2 = 0;
@@ -38,9 +35,14 @@ const int N = 119; //Gemiddelde pings per rotatie
 const float pi = 3.14;
 
 // PeriSensor
-int periData = 0;
-int periPin = 11;
+int periDataFront = 0; // Data voor perimeter sensor aan de voorkant
+int periDataRight = 0; // Data voor perimeter sensor aan de rechterkant
 
+int periPinFront = A0; // Pin voor perimeter sensor aan de voorkant
+int periPinRight = A1; // Pin voor perimeter sensor aan de rechterkant
+
+//Battery
+const int analogInPin = A2; // Pin lezen batterij
 
 void setup() {
   delay(1000);
@@ -70,69 +72,19 @@ void setup() {
   digitalWrite(wheelPin2, INPUT);
 
   // Get data from peri sensor
-  digitalWrite(periPin, INPUT);
+  // digitalWrite(periPin, INPUT);
 
   goForward(goSpeed, goSpeed2);
   
 
 }
 
-void readEncoder(){
-  wheelData1 = digitalRead(wheelPin1);
-  wheelData2 = digitalRead(wheelPin2);
-
-  if(wheelData1 != oldWheelData1){
-    oldWheelData1 = wheelData1;
-    ++wheelPings1;
-    ++wheelPingsWhenStopped1;
-    // Serial.println("Wheeldata: " + String(wheelData));
-    // Serial.println("Them wheels: " + String(getCounter1()));
-  }
-  if(wheelData2 != oldWheelData2){
-    oldWheelData2 = wheelData2;
-    ++wheelPings2;
-    ++wheelPingsWhenStopped2;
-    // Serial.println("Wheeldata: " + String(wheelData));
-    // Serial.println("Them wheels: " + String(getCounter2()));
-  }
-}
-
-int getCounter1(){
-  int result;
-  noInterrupts();
-  result = wheelPings1;
-  interrupts();
-  return result;
-}
-int getCounter2(){
-  int result;
-  noInterrupts();
-  result = wheelPings2;
-  interrupts();
-  return result;
-}
-
-int getDistance1(){
-  distance1 = ((2*pi*R)/N) * getCounter1();
-  return distance1;
-}
-int getDistance2(){
-  distance2 = ((2*pi*R)/N) * getCounter2();
-  return distance2;
-}
-
 void loop() {
-
-  periData = digitalRead(periPin);
-  Serial.println("SensorData: " + String(periData));
+ 
+  float batteryVoltage = getBatteryStatus();
+  Serial.println(batteryVoltage);
   readEncoder();
-  // if(getDistance1() >= 100){
-  //   getDistance2();
-    
-  //   Serial.println("Distance1 in cm: " + String(getCounter1()));
-  //   Serial.println("Distance2 in cm: " + String(getCounter2()));
-  //   Stop();
-  // }
+  readPerimeters();
 
   if(Serial.available() > 0) { // Checks whether data is comming form the serial port
     data = Serial.read(); //Reads the data from the serial port
@@ -160,8 +112,87 @@ void loop() {
 
 }
 
-/////////////////////////////////////////////////////////////////////////
+/* 
+  Get data from perimeter pins and put them in periDataFront and periDataRight
+*/
+void readPerimeters(){
+   periDataFront = analogRead(periPinFront);
+  //  Serial.println("SensorDataFront: " + String(periDataFront));
+   periDataRight = analogRead(periPinRight);
+  //  Serial.println("SensorDataRight: " + String(periDataRight));
+   if(periDataFront >= 300){ // Als voorkant rond de 5cm van de perimeter is --> stop
+     Stop();
+   }
+}
 
+///////////////////////////////////////////// Wheel Encoder part
+/* 
+  Get data from wheelencoder pins and put them in wheelData1 and wheelData2.
+  Also increase wheelpings1 and 2 and wheelPingsWhenStopped1 and 2 if needed.
+
+*/
+void readEncoder(){
+  wheelData1 = digitalRead(wheelPin1);
+  wheelData2 = digitalRead(wheelPin2);
+
+  if(wheelData1 != oldWheelData1){
+    oldWheelData1 = wheelData1;
+    ++wheelPings1;
+    ++wheelPingsWhenStopped1;
+    // Serial.println("Wheeldata: " + String(wheelData));
+    // Serial.println("Them wheels: " + String(getCounter1()));
+  }
+  if(wheelData2 != oldWheelData2){
+    oldWheelData2 = wheelData2;
+    ++wheelPings2;
+    ++wheelPingsWhenStopped2;
+    // Serial.println("Wheeldata: " + String(wheelData));
+    // Serial.println("Them wheels: " + String(getCounter2()));
+  }
+}
+
+/*
+  Return the number of pings foor wheel 1
+*/
+int getCounter1(){
+  int result;
+  noInterrupts();
+  result = wheelPings1;
+  interrupts();
+  return result;
+}
+/*
+  Return the number of pings foor wheel 2
+*/
+int getCounter2(){
+  int result;
+  noInterrupts();
+  result = wheelPings2;
+  interrupts();
+  return result;
+}
+
+/*
+  Return distance traveled by wheel 1
+  */
+int getDistance1(){
+  distance1 = ((2*pi*R)/N) * getCounter1();
+  return distance1;
+}
+/*
+  Return distance traveled by wheel 2
+  */
+int getDistance2(){
+  distance2 = ((2*pi*R)/N) * getCounter2();
+  return distance2;
+}
+
+
+///////////////////////////////////////////////////////////////////////// Movement part
+
+/* 
+  Keep speed of wheel 1 in allowed range
+  */
 int speedVerify1(int speed) {
   if (speed < 0){
     speed = 0;
@@ -171,7 +202,9 @@ int speedVerify1(int speed) {
   }
   return speed;
 }
-
+/* 
+  Keep speed of wheel 2 in allowed range
+  */
 int speedVerify2(int speed1, int speed2){
    if (speed2 < 0){
     speed2 = 0;
@@ -276,6 +309,9 @@ void Stop(){
   Serial.println("stop");
 }
 
+/*
+  Set mower to spinning of not spinning
+  */
 void setMower(bool value) {
   if (value == true) {
     digitalWrite(relaisPin, HIGH);
@@ -287,6 +323,9 @@ void setMower(bool value) {
   }
 }
 
+/*
+  Get battery status in volts
+  */
 float getBatteryStatus() {
   int sensorValue = analogRead(analogInPin);
   float batteryVoltage=map(sensorValue,0,932,0,1680);
