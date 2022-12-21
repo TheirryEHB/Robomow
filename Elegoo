@@ -2,6 +2,7 @@
 int oldSpeed = 0;
 int goSpeed= 150; // Snelheid motor 1
 int goSpeed2 = 255; // Snelheid motor 2
+const int motor_offset = 5;
 
 /* Motor A connections*/
 int enA = 2;
@@ -18,8 +19,8 @@ int relaisStatus = 0; //Status relay
  int data = 0; //Data van bluetooth module
 
 /* Wheel Encoder*/
-int wheelPin1 = 9; //Pin voor data wiel 1
-int wheelPin2 = 10; 
+int wheelPin1 = 9; //Pin voor data wiel 1 (met orange pin draad)
+int wheelPin2 = 10; //(met grijze pin draad)
 int wheelPings1 = 0; // Aantal pings wiel 1
 int wheelPings2 = 0; 
 int wheelPingsWhenStopped1 = 0; // Aantal pings wanneer wiel 1 is gestopt
@@ -37,9 +38,9 @@ const float pi = 3.14;
 // PeriSensor
 int periDataFront = 0; // Data voor perimeter sensor aan de voorkant
 int periDataRight = 0; // Data voor perimeter sensor aan de rechterkant
-
 int periPinFront = A0; // Pin voor perimeter sensor aan de voorkant
 int periPinRight = A1; // Pin voor perimeter sensor aan de rechterkant
+int turning = 0;
 
 //Battery
 const int analogInPin = A2; // Pin lezen batterij
@@ -48,8 +49,8 @@ void setup() {
   delay(1000);
   Serial.begin(9600);
   Serial.setTimeout(1000);
-  Serial.println();
-  Serial.print("Configuring access point...");
+  // Serial.println();
+  // Serial.print("Configuring access point...");
 
    // Set all the motor control pins to outputs
   pinMode(enA, OUTPUT);
@@ -74,7 +75,8 @@ void setup() {
   // Get data from peri sensor
   // digitalWrite(periPin, INPUT);
 
-  goForward(goSpeed, goSpeed2);
+  // goForward(goSpeed, goSpeed2);
+  // rotate90Left(goSpeed, goSpeed2);
   
 
 }
@@ -82,13 +84,13 @@ void setup() {
 void loop() {
  
   float batteryVoltage = getBatteryStatus();
-  Serial.println(batteryVoltage);
+
   readEncoder();
   readPerimeters();
+  stopRotate90Left();
 
   if(Serial.available() > 0) { // Checks whether data is comming form the serial port
     data = Serial.read(); //Reads the data from the serial port
-    
     
       if(data == '1'){
         rotateLeft(goSpeed, goSpeed2);
@@ -108,8 +110,74 @@ void loop() {
       else if(data == '6'){
         Stop();
       }
+      else if(data == '7'){
+        rotate90Left(goSpeed, goSpeed2);
+      }
+      else if(data == '8'){
+        driveStraight(100, goSpeed);
+      }
   }
 
+}
+
+void driveStraight(int dist, int power){
+
+  setValuesToZero();
+
+  unsigned long num_ticks_l;
+  unsigned long num_ticks_r;
+
+  // Set initial motor power
+  int power_l = power;
+  int power_r = power;
+
+  // Remember previous encoder counts
+  unsigned int enc_l_prev = wheelPings1;
+  unsigned int enc_r_prev = wheelPings2;
+
+  // Used to determine which way to turn to adjust
+  unsigned long diff_l;
+  unsigned long diff_r;
+  unsigned long target_count = getPingsDistance(dist);
+  Serial.println(String(target_count));
+  //Wiel 1 is r
+
+  while((wheelPings2 < target_count)){
+    readEncoder();
+    num_ticks_l = wheelPings1;
+    num_ticks_r = wheelPings2;
+
+    Serial.println("w1: " + String(wheelPings1));
+    Serial.println("w2: " + String(wheelPings2));
+    //Drive
+    goForward(power_l, power_r);
+
+    // Number of ticks counted since last time
+    diff_l = num_ticks_l - enc_l_prev;
+    diff_r = num_ticks_r - enc_r_prev;
+
+    // Store current tick counter for next time
+    enc_l_prev = num_ticks_l;
+    enc_r_prev = num_ticks_r;
+
+  // If left is faster, slow it down and speed up right
+    if ( diff_l > diff_r ) {
+      power_l -= motor_offset;
+      power_r += motor_offset;
+    }
+
+    // If right is faster, slow it down and speed up left
+    if ( diff_l < diff_r ) {
+      power_l += motor_offset;
+      power_r -= motor_offset;
+    }
+
+    // Brief pause to let motors respond
+    delay(20);
+  }
+
+  // Brake
+  Stop();
 }
 
 /* 
@@ -120,7 +188,7 @@ void readPerimeters(){
   //  Serial.println("SensorDataFront: " + String(periDataFront));
    periDataRight = analogRead(periPinRight);
   //  Serial.println("SensorDataRight: " + String(periDataRight));
-   if(periDataFront >= 300){ // Als voorkant rond de 5cm van de perimeter is --> stop
+   if(periDataFront >= 2000){ // Als voorkant rond de 5cm van de perimeter is --> stop
      Stop();
    }
 }
@@ -173,20 +241,23 @@ int getCounter2(){
 }
 
 /*
-  Return distance traveled by wheel 1
+  Return distance traveled by wheel 1 in cm
   */
 int getDistance1(){
   distance1 = ((2*pi*R)/N) * getCounter1();
   return distance1;
 }
 /*
-  Return distance traveled by wheel 2
+  Return distance traveled by wheel 2 in cm
   */
 int getDistance2(){
   distance2 = ((2*pi*R)/N) * getCounter2();
   return distance2;
 }
 
+long getPingsDistance(int dis){
+  return dis/((2*pi*R)/N);
+}
 
 ///////////////////////////////////////////////////////////////////////// Movement part
 
@@ -226,8 +297,8 @@ void goForward(int motorSpeed1, int motorSpeed2){
   analogWrite(enA, motorSpeed1);
   analogWrite(enB, motorSpeed2);   
   // Serial.print("forward:");
-  Serial.println(motorSpeed1);
-  Serial.println(motorSpeed2);
+  // Serial.println(motorSpeed1);
+  // Serial.println(motorSpeed2);
   
 }
 
@@ -278,8 +349,8 @@ void goLeft(int motorSpeed1, int motorSpeed2){
   digitalWrite(in4, HIGH);  
   analogWrite(enA, motorSpeed1/2);
   analogWrite(enB, motorSpeed2);
-  Serial.print("left:");
-  Serial.println(motorSpeed1);
+  // Serial.print("left:");
+  // Serial.println(motorSpeed1);
   
 }
 void rotateLeft(int motorSpeed1, int motorSpeed2){
@@ -289,9 +360,31 @@ void rotateLeft(int motorSpeed1, int motorSpeed2){
   digitalWrite(in4, HIGH);  
   analogWrite(enA, motorSpeed1);
   analogWrite(enB, motorSpeed2);
-  Serial.print("rotate left:");
-  Serial.println(motorSpeed1);
+  // Serial.print("rotate left:");
+  // Serial.println(motorSpeed1);
   
+}
+
+void stopRotate90Left(){
+  if(turning == 1){
+    if(wheelPingsWhenStopped2 == 90){
+      turning = 0;
+      Stop();
+    }
+  }
+}
+
+void rotate90Left(int motorSpeed1, int motorSpeed2){
+  setValuesToZero();
+  turning = 1;
+  digitalWrite(in1, LOW);
+  digitalWrite(in2, HIGH);
+  digitalWrite(in3, LOW);
+  digitalWrite(in4, HIGH);  
+  analogWrite(enA, motorSpeed1);
+  analogWrite(enB, motorSpeed2);
+  // Serial.print("rotating 90 degrees left...");
+  // Serial.println(motorSpeed1);
 }
 
 void Stop(){
@@ -301,12 +394,20 @@ void Stop(){
   digitalWrite(in4, LOW);
   analogWrite(enA, 0);
   analogWrite(enB, 0);
-  // getDistance();
+  // getDistance1();
+  // Serial.println("stop");
+  // Serial.println("wheelpings1: " + String(wheelPingsWhenStopped1));
+  // Serial.println("wheelpings2: " + String(wheelPingsWhenStopped2));
+  setValuesToZero();
+}
+
+void setValuesToZero(){
   oldWheelData1 = 2;
   wheelPings1 = 0;
   oldWheelData2 = 2;
   wheelPings2 = 0;
-  Serial.println("stop");
+  wheelPingsWhenStopped1 = 0;
+  wheelPingsWhenStopped2 = 0;
 }
 
 /*
