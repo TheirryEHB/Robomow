@@ -42,6 +42,7 @@ int periDataRight = 0; // Data voor perimeter sensor aan de rechterkant
 int periPinFront = A0; // Pin voor perimeter sensor aan de voorkant
 int periPinRight = A1; // Pin voor perimeter sensor aan de rechterkant
 int turning = 0;
+int count = 0;
 
 //Battery
 const int analogInPin = A2; // Pin lezen batterij
@@ -70,15 +71,18 @@ void setup() {
   digitalWrite(relaisPin, LOW);
 
   // Get pings from wheel encoder
-  digitalWrite(wheelPin1, INPUT);
-  digitalWrite(wheelPin2, INPUT);
+  digitalWrite(wheelPin1, INPUT_PULLUP);
+  digitalWrite(wheelPin2, INPUT_PULLUP);
 
   // Get data from peri sensor
-  // digitalWrite(periPin, INPUT);
+  // digitalWrite(periPinFront, INPUT_PULLUP);
+  // digitalWrite(periPinRight, INPUT_PULLUP);
 
-  // goForward(goSpeed, goSpeed2);
+  
   // rotate90Left(goSpeed, goSpeed2);
-  attachInterrupt(digitalPinToInterrupt(enc_l_pin), countLeft, CHANGE)
+  // attachInterrupt(digitalPinToInterrupt(wheelPin1), &readEncoder, CHANGE);
+  // attachInterrupt(digitalPinToInterrupt(wheelPin2), readEncoder, CHANGE);
+
   delay(1000);
 
 }
@@ -86,18 +90,23 @@ void setup() {
 void loop() {
  
   float batteryVoltage = getBatteryStatus();
+  readPerimeters();
 
   if(running == 1){
     readEncoder();
     // Serial.println("w1: "+String(getCounter1()));
     // Serial.println("w2: "+String(getCounter2()));
+    if(turning == 1){
+      stopRotate90Left();
+    }
   }
+  else if(running == 0){
+    goForward(goSpeed, goSpeed2);
+  }
+  
   // readEncoder();
   // Serial.println("w1: "+String(getCounter1()));
   // Serial.println("w2: "+String(getCounter2()));
-  readPerimeters();
-  stopRotate90Left();
-  
 
   if(Serial.available() > 0) { // Checks whether data is comming form the serial port
     data = Serial.read(); //Reads the data from the serial port
@@ -163,8 +172,8 @@ void driveStraight(int dist, int power){
   while((wheelPings2 < target_count)){
     
     readEncoder();
-    num_ticks_l = wheelData1;
-    num_ticks_r = wheelData2;
+    num_ticks_l = getCounter1();
+    num_ticks_r = getCounter2();
 
     Serial.print("d1: " + String(diff_l));
     Serial.print(" p1: " + String(power_l));
@@ -175,28 +184,28 @@ void driveStraight(int dist, int power){
     // Drive
     goForward(power_l, power_r);
 
-    // // Number of ticks counted since last time
-    // diff_l = num_ticks_l - enc_l_prev;
-    // diff_r = num_ticks_r - enc_r_prev;
+    // Number of ticks counted since last time
+    diff_l = num_ticks_l - enc_l_prev;
+    diff_r = num_ticks_r - enc_r_prev;
 
-    // // Store current tick counter for next time
-    // enc_l_prev = num_ticks_l;
-    // enc_r_prev = num_ticks_r;
+    // Store current tick counter for next time
+    enc_l_prev = num_ticks_l;
+    enc_r_prev = num_ticks_r;
 
     // If left is faster, slow it down and speed up right
-    if ( num_ticks_l < num_ticks_r ) {
+    if ( diff_l > diff_r ) {
       power_l -= motor_offset;
       power_r += motor_offset;
     }
 
     // If right is faster, slow it down and speed up left
-    if ( num_ticks_r < num_ticks_l ) {
+    if ( diff_l < diff_r ) {
       power_l += motor_offset;
       power_r -= motor_offset;
     }
 
     power_l = speedVerify(power_l);
-    power_r =  speedVerify(power_r);
+    power_r = speedVerify(power_r);
 
     // Brief pause to let motors respond
     delay(20);
@@ -208,15 +217,24 @@ void driveStraight(int dist, int power){
 
 /* 
   Get data from perimeter pins and put them in periDataFront and periDataRight
+  https://www.arduino.cc/reference/en/language/functions/analog-io/analogread/
+  https://forum.arduino.cc/t/analogread-always-returning-1023/239329/10
+  De rightpin geeft 0 als niets in de buurt en 6 vannaf rond de 7 cm
+  Vreemd genoeg geeft de frontpin minimaal 12 als data. En rond de 5cm verhoogt dit naar een 20
 */
 void readPerimeters(){
-   periDataFront = analogRead(periPinFront);
+  noInterrupts();
+  periDataFront = analogRead(periPinFront);
   //  Serial.println("SensorDataFront: " + String(periDataFront));
-   periDataRight = analogRead(periPinRight);
-  //  Serial.println("SensorDataRight: " + String(periDataRight));
-   if(periDataFront >= 2000){ // Als voorkant rond de 5cm van de perimeter is --> stop
-     Stop();
-   }
+  periDataRight = analogRead(periPinRight); //groen gijs
+  // Serial.println("SensorDataRight: " + String(periDataRight));
+  interrupts();
+  if(periDataFront > 20){
+    rotate90Left(goSpeed, goSpeed2);
+  }
+  // if(periDataRight > 6){ // Als voorkant rond de 5cm van de perimeter is --> stop
+  //   rotate90Left(goSpeed, goSpeed2);
+  //  }
 }
 
 ///////////////////////////////////////////// Wheel Encoder part
@@ -226,24 +244,24 @@ void readPerimeters(){
 
 */
 void readEncoder(){
-  noInterrupts();
-  wheelData1 = pulseIn(wheelPin1, HIGH);
-  wheelData2 = pulseIn(wheelPin2, HIGH);
-  
-  Serial.println("wheeld: " + String(wheelData1));
-  Serial.println("wheeld2: " + String(wheelData2));
 
-  interrupts();
-
-  if(wheelData1 < 8000){
+  wheelData1 = digitalRead(wheelPin1);
+  wheelData2 = digitalRead(wheelPin2);
+   
+  if(wheelData1 == HIGH){
     oldWheelData1 = wheelData1;
     ++wheelPings1;
     ++wheelPingsWhenStopped1;
+    // Serial.println("wheeld: " + String(wheelData1) + " H1");
   }
-  if(wheelData2 < 8000){
+  else{
+    // Serial.println("wheeld: " + String(wheelData1) + " L1");
+  }
+  if(wheelData2 == HIGH){
     oldWheelData2 = wheelData2;
     ++wheelPings2;
     ++wheelPingsWhenStopped2;
+    // Serial.println("wheeld2: " + String(wheelData2) + " H2");
   }
 }
 
@@ -313,11 +331,7 @@ void goForward(int motorSpeed1, int motorSpeed2){
   motorSpeed1 = speedVerify(motorSpeed1);
   motorSpeed2 = speedVerify(motorSpeed2);
   analogWrite(enA, motorSpeed1);
-  analogWrite(enB, motorSpeed2);   
-  // Serial.print("forward:");
-  // Serial.println(motorSpeed1);
-  // Serial.println(motorSpeed2);
-  
+  analogWrite(enB, motorSpeed2);
 }
 
 void goBackward(int motorSpeed1, int motorSpeed2){
@@ -383,21 +397,23 @@ void rotateLeft(int motorSpeed1, int motorSpeed2){
 }
 
 void stopRotate90Left(){
-  if(turning == 1){
-    if(wheelPingsWhenStopped2 == 90){
-      turning = 0;
-      Stop();
-    }
+  if(wheelPingsWhenStopped2 == 1100){ //Niet meer 90
+    Stop();
   }
 }
 
 void rotate90Left(int motorSpeed1, int motorSpeed2){
   setValuesToZero();
+  // count += 1;
+  // Serial.println("Count is: " + String(count));
   turning = 1;
+  running = 1;
   digitalWrite(in1, LOW);
   digitalWrite(in2, HIGH);
   digitalWrite(in3, LOW);
-  digitalWrite(in4, HIGH);  
+  digitalWrite(in4, HIGH);
+  motorSpeed1 = speedVerify(motorSpeed1);
+  motorSpeed2 = speedVerify(motorSpeed2);
   analogWrite(enA, motorSpeed1);
   analogWrite(enB, motorSpeed2);
   // Serial.print("rotating 90 degrees left...");
@@ -411,8 +427,7 @@ void Stop(){
   digitalWrite(in4, LOW);
   analogWrite(enA, 0);
   analogWrite(enB, 0);
-  // getDistance1();
-  // Serial.println("stop");
+
   Serial.println("wheelpings1: " + String(wheelPingsWhenStopped1));
   Serial.println("wheelpings2: " + String(wheelPingsWhenStopped2));
   setValuesToZero();
@@ -426,6 +441,7 @@ void setValuesToZero(){
   wheelPingsWhenStopped1 = 0;
   wheelPingsWhenStopped2 = 0;
   running = 0;
+  turning = 0;
 }
 
 /*
