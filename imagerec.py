@@ -3,98 +3,52 @@ import numpy as np
 from matplotlib import pyplot as plt
 import time
 
-cv2.namedWindow("preview")
-vc = cv2.VideoCapture(0)
-#https://www.geeksforgeeks.org/how-to-detect-shapes-in-images-in-python-using-opencv/
-#https://www.geeksforgeeks.org/how-to-capture-a-image-from-webcam-in-python/
+print(cv2.__version__)
 
-def useCam():
-    if vc.isOpened(): # try to get the first frame
-        rval, frame = vc.read()
-    else:
-        rval = False
-
-    while rval:
-        cv2.imshow("preview", frame)
-        cv2.imwrite("imgg.png", frame)
-        rval, frame = vc.read()
-        key = cv2.waitKey(20)
-        if key == 27: # exit on ESC
-            break
-        #time.sleep(3)
-        imgRec()
-
-    vc.release()
-    cv2.destroyWindow("preview")
+#https://pysource.com/2019/02/15/detecting-colors-hsv-color-space-opencv-with-python/
+cap = cv2.VideoCapture(0)
+while True:
+    _, frame = cap.read()
+    hsv_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
     
-def imgRec():
-    img = cv2.imread('imgg.png')
-    # converting image into grayscale image
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-  
-    # setting threshold of gray image
-    _, threshold = cv2.threshold(gray, 127, 255, cv2.THRESH_BINARY)
-  
-    # using a findContours() function
-    contours, _ = cv2.findContours(
-        threshold, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-      
-    i = 0
+    # Blue color
+    low_blue = np.array([94, 80, 2])
+    high_blue = np.array([126, 255, 255])
+    blue_mask = cv2.inRange(hsv_frame, low_blue, high_blue)
+    result_blue = cv2.bitwise_and(frame, frame, mask=blue_mask)
     
-      
-    # list for storing names of shapes
-    for contour in contours:
+    #Shape recognition
+    #https://pysource.com/2018/12/29/real-time-shape-detection-opencv-with-python-3/
+    #https://pysource.com/2018/03/01/find-and-draw-contours-opencv-3-4-with-python-3-tutorial-19/
+    kernel = np.ones((5, 5), np.uint8)
+    mask =  cv2.erode(blue_mask, kernel)
+    contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    for cnt in contours:
+        area = cv2.contourArea(cnt)
+        approx = cv2.approxPolyDP(cnt, 0.02*cv2.arcLength(cnt, True), True)
+        x = approx.ravel()[0]
+        y = approx.ravel()[1]
+        
+        if area > 400:
+            cv2.drawContours(frame, [approx], 0, (0, 0, 0), 5)
+            if len(approx) == 3:
+                cv2.putText(frame, "Triangle", (x, y), 3, 1, (0, 0, 0))
+            elif len(approx) == 4:
+                cv2.putText(frame, "Rectangle", (x, y), 3, 1, (0, 0, 0))
+            elif 10 < len(approx) < 20:
+                cv2.putText(frame, "Circle", (x, y), 3, 1, (0, 0, 0))
+        
     
-        # here we are ignoring first counter because 
-        # findcontour function detects whole image as shape
-        if i == 0:
-            i = 1
-            continue
-        #print(contour)
-        # cv2.approxPloyDP() function to approximate the shape
-        approx = cv2.approxPolyDP(
-            contour, 0.01 * cv2.arcLength(contour, True), True)
-          
-        # using drawContours() function
-        cv2.drawContours(img, [contour], 0, (0, 0, 255), 5)
-      
-        # finding center point of shape
-        M = cv2.moments(contour)
-        if M['m00'] != 0.0:
-            x = int(M['m10']/M['m00'])
-            y = int(M['m01']/M['m00'])
-      
-        # putting shape name at center of each shape
-        if len(approx) == 3:
-            cv2.putText(img, 'Triangle', (x, y),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
-            #return
-      
-        elif len(approx) == 4:
-            cv2.putText(img, 'Quadrilateral', (x, y),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
-            #return
-      
-        elif len(approx) == 5:
-            cv2.putText(img, 'Pentagon', (x, y),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
-            #return
-      
-        elif len(approx) == 6:
-            cv2.putText(img, 'Hexagon', (x, y),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
-            #return
-      
-        #else:
-            #cv2.putText(img, 'circle', (x, y),
-             #           cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
-      
-    # displaying the image after drawing contours
-    cv2.imshow('shapes', img)
-      
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    #Show results
+    cv2.imshow("Frame", frame)
     
+    #cv2.imshow("Blue", result_blue)
+    
+    key = cv2.waitKey(1)
+    if key == 27:
+        break
 
-useCam()
 
+def nothing(x):
+    # any operation
+   pass
