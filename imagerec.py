@@ -8,7 +8,7 @@ print(cv2.__version__)
 
 #https://www.instructables.com/Raspberry-Pi-Arduino-Serial-Communication/
 #https://www.arrow.com/en/research-and-events/articles/raspberry-pi-to-arduino-serial-communication-via-usb
-ser = serial.Serial('/dev/ttyACM0'm 9600)
+ser = serial.Serial('/dev/ttyACM0', 9600)
 s = [0]
 
 def getCenterContour(frame):
@@ -32,10 +32,10 @@ def distanceCalculate(p1, p2):
     return dis
 
 def turnRight():
-    ser.write(b'0')
+    ser.write(b'10')
     print("do R")
 def turnLeft():
-    ser.write(b'1')
+    ser.write(b'11')
     print("do L")
 
 #https://pysource.com/2019/02/15/detecting-colors-hsv-color-space-opencv-with-python/
