@@ -2,8 +2,14 @@ import cv2
 import numpy as np
 from matplotlib import pyplot as plt
 import time
+import serial
 
 print(cv2.__version__)
+
+#https://www.instructables.com/Raspberry-Pi-Arduino-Serial-Communication/
+#https://www.arrow.com/en/research-and-events/articles/raspberry-pi-to-arduino-serial-communication-via-usb
+ser = serial.Serial('/dev/ttyACM0'm 9600)
+s = [0]
 
 def getCenterContour(frame):
     #https://www.geeksforgeeks.org/python-opencv-find-center-of-contour/
@@ -26,8 +32,10 @@ def distanceCalculate(p1, p2):
     return dis
 
 def turnRight():
+    ser.write(b'0')
     print("do R")
 def turnLeft():
+    ser.write(b'1')
     print("do L")
 
 #https://pysource.com/2019/02/15/detecting-colors-hsv-color-space-opencv-with-python/
@@ -87,3 +95,4 @@ while True:
     key = cv2.waitKey(1)
     if key == 27:
         break
+
