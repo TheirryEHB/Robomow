@@ -5,11 +5,27 @@ import time
 
 print(cv2.__version__)
 
+def getCenterContour(frame):
+    #https://www.geeksforgeeks.org/python-opencv-find-center-of-contour/
+    #https://pyimagesearch.com/2016/02/01/opencv-center-of-contour/
+    M = cv2.moments(cnt)
+    if M['m00'] != 0:
+        cx = int(M['m10']/M['m00'])
+        cy = int(M['m01']/M['m00'])
+        cv2.circle(frame, (cx, cy), 7, (0, 0, 255), -1)
+        cv2.putText(frame, "center", (cx - 20, cy - 20),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2)
+
 #https://pysource.com/2019/02/15/detecting-colors-hsv-color-space-opencv-with-python/
 cap = cv2.VideoCapture(0)
 while True:
     _, frame = cap.read()
     hsv_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+    
+    #Center of entire frame
+    #https://stackoverflow.com/questions/53029540/find-centroid-coordinate-of-whole-frame-in-opencv
+    (h, w) = frame.shape[:2] #w:image-width and h:image-height
+    cv2.circle(frame, (w//2, h//2), 7, (255, 255, 255), -1) 
     
     # Blue color
     low_blue = np.array([94, 80, 2])
@@ -33,8 +49,10 @@ while True:
             cv2.drawContours(frame, [approx], 0, (0, 0, 0), 5)
             if len(approx) == 3:
                 cv2.putText(frame, "Triangle", (x, y), 3, 1, (0, 0, 0))
+                getCenterContour(frame)
             elif len(approx) == 4:
                 cv2.putText(frame, "Rectangle", (x, y), 3, 1, (0, 0, 0))
+                getCenterContour(frame)
             elif 10 < len(approx) < 20:
                 cv2.putText(frame, "Circle", (x, y), 3, 1, (0, 0, 0))
         
@@ -48,7 +66,5 @@ while True:
     if key == 27:
         break
 
+    
 
-def nothing(x):
-    # any operation
-   pass
