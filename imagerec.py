@@ -32,10 +32,10 @@ def distanceCalculate(p1, p2):
     return dis
 
 def turnRight():
-    ser.write(b'10')
+    ser.write(b'r')
     print("do R")
 def turnLeft():
-    ser.write(b'11')
+    ser.write(b'l')
     print("do L")
 
 #https://pysource.com/2019/02/15/detecting-colors-hsv-color-space-opencv-with-python/
