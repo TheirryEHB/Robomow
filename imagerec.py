@@ -13,8 +13,22 @@ def getCenterContour(frame):
         cx = int(M['m10']/M['m00'])
         cy = int(M['m01']/M['m00'])
         cv2.circle(frame, (cx, cy), 7, (0, 0, 255), -1)
-        cv2.putText(frame, "center", (cx - 20, cy - 20),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2)
+        return (cx, cy)
+        #cv2.putText(frame, "center", (cx - 20, cy - 20),
+         #           cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2)
+         
+def distanceCalculate(p1, p2):
+    #p1 and p2 in format (x1,y1) and (x2,y2) tuples
+    #p1 is the center of the entire frame, p2 is the center of the contour
+
+    dis = ((p2[0] - p1[0]) ** 2 + (p2[1] - p1[1]) ** 2) ** 0.5
+    #print("X frame: " + str(p1[0]) + "X shape: " + str(p2[0]))
+    return dis
+
+def turnRight():
+    print("do R")
+def turnLeft():
+    print("do L")
 
 #https://pysource.com/2019/02/15/detecting-colors-hsv-color-space-opencv-with-python/
 cap = cv2.VideoCapture(0)
@@ -49,22 +63,27 @@ while True:
             cv2.drawContours(frame, [approx], 0, (0, 0, 0), 5)
             if len(approx) == 3:
                 cv2.putText(frame, "Triangle", (x, y), 3, 1, (0, 0, 0))
-                getCenterContour(frame)
+                centerShape = getCenterContour(frame)
+                dis = distanceCalculate((w//2, h//2), centerShape)
+                if(dis > 2):
+                    if(centerShape[0] > 340):
+                        turnRight()
+                        # Wait for 300milliseconds
+                        #time.sleep(0.500)
+                    if(centerShape[0] < 300):
+                        turnLeft()
+                        #time.sleep(0.500)
+                    
             elif len(approx) == 4:
                 cv2.putText(frame, "Rectangle", (x, y), 3, 1, (0, 0, 0))
                 getCenterContour(frame)
             elif 10 < len(approx) < 20:
                 cv2.putText(frame, "Circle", (x, y), 3, 1, (0, 0, 0))
         
-    
     #Show results
-    cv2.imshow("Frame", frame)
-    
+    cv2.imshow("Frame", frame)    
     #cv2.imshow("Blue", result_blue)
     
     key = cv2.waitKey(1)
     if key == 27:
         break
-
-    
-
