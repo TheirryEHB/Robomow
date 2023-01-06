@@ -44,16 +44,16 @@ while True:
     _, frame = cap.read()
     hsv_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
     
-    #Center of entire frame
-    #https://stackoverflow.com/questions/53029540/find-centroid-coordinate-of-whole-frame-in-opencv
-    (h, w) = frame.shape[:2] #w:image-width and h:image-height
-    cv2.circle(frame, (w//2, h//2), 7, (255, 255, 255), -1) 
-    
     # Blue color
     low_blue = np.array([94, 80, 2])
     high_blue = np.array([126, 255, 255])
     blue_mask = cv2.inRange(hsv_frame, low_blue, high_blue)
     result_blue = cv2.bitwise_and(frame, frame, mask=blue_mask)
+    
+    #Center of entire frame
+    #https://stackoverflow.com/questions/53029540/find-centroid-coordinate-of-whole-frame-in-opencv
+    (h, w) = result_blue.shape[:2] #w:image-width and h:image-height
+    cv2.circle(result_blue, (w//2, h//2), 7, (255, 255, 255), -1) 
     
     #Shape recognition
     #https://pysource.com/2018/12/29/real-time-shape-detection-opencv-with-python-3/
@@ -68,10 +68,10 @@ while True:
         y = approx.ravel()[1]
         
         if area > 400:
-            cv2.drawContours(frame, [approx], 0, (0, 0, 0), 5)
+            cv2.drawContours(result_blue, [approx], 0, (0, 0, 0), 5)
             if len(approx) == 3:
-                cv2.putText(frame, "Triangle", (x, y), 3, 1, (0, 0, 0))
-                centerShape = getCenterContour(frame)
+                cv2.putText(result_blue, "Triangle", (x, y), 3, 1, (255, 255, 255))
+                centerShape = getCenterContour(result_blue)
                 dis = distanceCalculate((w//2, h//2), centerShape)
                 if(dis > 2):
                     if(centerShape[0] > 340):
@@ -83,14 +83,14 @@ while True:
                         #time.sleep(0.500)
                     
             elif len(approx) == 4:
-                cv2.putText(frame, "Rectangle", (x, y), 3, 1, (0, 0, 0))
-                getCenterContour(frame)
+                cv2.putText(result_blue, "Rectangle", (x, y), 3, 1, (255, 255, 255))
+                getCenterContour(result_blue)
             elif 10 < len(approx) < 20:
-                cv2.putText(frame, "Circle", (x, y), 3, 1, (0, 0, 0))
+                cv2.putText(result_blue, "Circle", (x, y), 3, 1, (255, 255, 255))
         
     #Show results
-    cv2.imshow("Frame", frame)    
-    #cv2.imshow("Blue", result_blue)
+    #cv2.imshow("Frame", frame)    
+    cv2.imshow("Blue", result_blue)
     
     key = cv2.waitKey(1)
     if key == 27:
