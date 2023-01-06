@@ -104,8 +104,6 @@ void loop() {
   float batteryVoltage = getBatteryStatus();
   readPerimeters();
 
-
-
   if(running == 1){
     readEncoder();
     
@@ -135,15 +133,18 @@ void loop() {
         goForward(goSpeed, goSpeed2);
       }
     }
+    if(searchingForDock == 1 && foundDock == 1){
+      Serial.println("Stop");
+      Stop();
+    }
   }
 
   if(searchingForDock == 1 && foundDock == 0){
-      degreeToTurn = 1100;
-      rotateDegreeLeft(goSpeed, goSpeed2);
-    }
-  // else if(running == 0){
-  //   goForward(goSpeed, goSpeed2);
-  // }
+    Serial.println("rotating");
+      // rotateLeft(goSpeed, goSpeed2);
+  }
+  
+
   
   // readEncoder();
   // Serial.println("w1: "+String(getCounter1()));
@@ -196,9 +197,10 @@ void loop() {
       degreeToTurn = 300;
       rotateDegreeLeft(goSpeed, goSpeed2);
     }
-    else if(data == 'r'){
+    else if(data == 's'){
       searchingForDock = 1;
       foundDock = 0;
+      rotateLeft(goSpeed, goSpeed2);
     }
   }
 
@@ -436,6 +438,7 @@ void goRight(int motorSpeed1, int motorSpeed2){
 }
 
 void rotateRight(int motorSpeed1, int motorSpeed2){
+  running = 1;
   digitalWrite(in1, HIGH);
   digitalWrite(in2, LOW);
   digitalWrite(in3, HIGH);
@@ -459,10 +462,13 @@ void goLeft(int motorSpeed1, int motorSpeed2){
   
 }
 void rotateLeft(int motorSpeed1, int motorSpeed2){
+  running = 1;
   digitalWrite(in1, LOW);
   digitalWrite(in2, HIGH);
   digitalWrite(in3, LOW);
   digitalWrite(in4, HIGH);  
+  motorSpeed1 = speedVerify(motorSpeed1);
+  motorSpeed2 = speedVerify(motorSpeed2);
   analogWrite(enA, motorSpeed1);
   analogWrite(enB, motorSpeed2);
   // Serial.print("rotate left:");
