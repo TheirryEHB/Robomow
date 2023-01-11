@@ -9,6 +9,7 @@ print(cv2.__version__)
 #https://www.instructables.com/Raspberry-Pi-Arduino-Serial-Communication/
 #https://www.arrow.com/en/research-and-events/articles/raspberry-pi-to-arduino-serial-communication-via-usb
 ser = serial.Serial('/dev/ttyACM0', 9600)
+ser.reset_input_buffer()
 s = [0]
 
 def getCenterContour(frame):
@@ -37,6 +38,10 @@ def turnRight():
 def turnLeft():
     ser.write(b'l')
     print("do L")
+countCalc = 0
+def calcCirc():
+    ser.write(b'9')
+    countCalc = 1
 
 #https://pysource.com/2019/02/15/detecting-colors-hsv-color-space-opencv-with-python/
 cap = cv2.VideoCapture(0)
@@ -71,20 +76,23 @@ while True:
             cv2.drawContours(result_blue, [approx], 0, (0, 0, 0), 5)
             if len(approx) == 3:
                 cv2.putText(result_blue, "Triangle", (x, y), 3, 1, (255, 255, 255))
-                centerShape = getCenterContour(result_blue)
-                dis = distanceCalculate((w//2, h//2), centerShape)
-                if(dis > 2):
-                    if(centerShape[0] > 340):
-                        turnRight()
-                        # Wait for 300milliseconds
-                        #time.sleep(0.500)
-                    if(centerShape[0] < 300):
-                        turnLeft()
-                        #time.sleep(0.500)
+                if(countCalc == 0):
+                    centerShape = getCenterContour(result_blue)
+                    dis = distanceCalculate((w//2, h//2), centerShape)
+                    if(dis > 2):
+                        if(centerShape[0] > 340):
+                            turnRight()
+                            # Wait for 300milliseconds
+                            #time.sleep(0.500)
+                        if(centerShape[0] < 300):
+                            turnLeft()
+                            #time.sleep(0.500)
                     
             elif len(approx) == 4:
                 cv2.putText(result_blue, "Rectangle", (x, y), 3, 1, (255, 255, 255))
-                getCenterContour(result_blue)
+                if(countCalc == 0):
+                    calcCirc()
+                #centerShape = getCenterContour(result_blue)
             elif 10 < len(approx) < 20:
                 cv2.putText(result_blue, "Circle", (x, y), 3, 1, (255, 255, 255))
         
@@ -95,4 +103,6 @@ while True:
     key = cv2.waitKey(1)
     if key == 27:
         break
+
+
 
