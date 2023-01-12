@@ -6,11 +6,14 @@ import serial
 
 print(cv2.__version__)
 
+detector = cv2.QRCodeDetector()
+
 #https://www.instructables.com/Raspberry-Pi-Arduino-Serial-Communication/
 #https://www.arrow.com/en/research-and-events/articles/raspberry-pi-to-arduino-serial-communication-via-usb
 ser = serial.Serial('/dev/ttyACM0', 9600)
 ser.reset_input_buffer()
 s = [0]
+countCalc = 0
 
 def getCenterContour(frame):
     #https://www.geeksforgeeks.org/python-opencv-find-center-of-contour/
@@ -38,20 +41,32 @@ def turnRight():
 def turnLeft():
     ser.write(b'l')
     print("do L")
-countCalc = 0
-def calcCirc():
-    ser.write(b'9')
-    countCalc = 1
 
+def calcCirc():
+    if(countCalc == 0):
+        countCalc = 1
+        print("fsda")
+        ser.write(b'9')
+    else:
+        print("notnot")
+    
 #https://pysource.com/2019/02/15/detecting-colors-hsv-color-space-opencv-with-python/
 cap = cv2.VideoCapture(0)
+
 while True:
     _, frame = cap.read()
     hsv_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+#https://www.geeksforgeeks.org/webcam-qr-code-scanner-using-opencv/
+    data, bbox, _ = detector.detectAndDecode(frame)
+    if data == "https://www.linkedin.com/in/thierry-klougbo-880b071b1/":
+        print(countCalc)
+        calcCirc()
+        
     
     # Blue color
     low_blue = np.array([94, 80, 2])
     high_blue = np.array([126, 255, 255])
+    blurred = cv2.GaussianBlur(hsv_frame, (7,7), 0)
     blue_mask = cv2.inRange(hsv_frame, low_blue, high_blue)
     result_blue = cv2.bitwise_and(frame, frame, mask=blue_mask)
     
@@ -88,21 +103,18 @@ while True:
                             turnLeft()
                             #time.sleep(0.500)
                     
-            elif len(approx) == 4:
-                cv2.putText(result_blue, "Rectangle", (x, y), 3, 1, (255, 255, 255))
-                if(countCalc == 0):
-                    calcCirc()
+#             elif len(approx) == 4:
+#                 cv2.putText(result_blue, "Rectangle", (x, y), 3, 1, (255, 255, 255))
+#                 if(countCalc == 0):
+#                     calcCirc()
                 #centerShape = getCenterContour(result_blue)
-            elif 10 < len(approx) < 20:
-                cv2.putText(result_blue, "Circle", (x, y), 3, 1, (255, 255, 255))
+#             elif 10 < len(approx) < 20:
+#                 cv2.putText(result_blue, "Circle", (x, y), 3, 1, (255, 255, 255))
         
     #Show results
-    #cv2.imshow("Frame", frame)    
-    cv2.imshow("Blue", result_blue)
+    cv2.imshow("Frame", frame)    
+#     cv2.imshow("Blue", result_blue)
     
     key = cv2.waitKey(1)
     if key == 27:
         break
-
-
-
