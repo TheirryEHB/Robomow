@@ -13,6 +13,7 @@ detector = cv2.QRCodeDetector()
 ser = serial.Serial('/dev/ttyACM0', 9600)
 ser.reset_input_buffer()
 s = [0]
+# global countCalc
 countCalc = 0
 
 def getCenterContour(frame):
@@ -30,7 +31,6 @@ def getCenterContour(frame):
 def distanceCalculate(p1, p2):
     #p1 and p2 in format (x1,y1) and (x2,y2) tuples
     #p1 is the center of the entire frame, p2 is the center of the contour
-
     dis = ((p2[0] - p1[0]) ** 2 + (p2[1] - p1[1]) ** 2) ** 0.5
     #print("X frame: " + str(p1[0]) + "X shape: " + str(p2[0]))
     return dis
@@ -42,26 +42,34 @@ def turnLeft():
     ser.write(b'l')
     print("do L")
 
-def calcCirc():
-    if(countCalc == 0):
-        countCalc = 1
+def calcCirc(countCalc1):
+    if(countCalc1 == 0):
         print("fsda")
         ser.write(b'9')
-    else:
-        print("notnot")
+    
     
 #https://pysource.com/2019/02/15/detecting-colors-hsv-color-space-opencv-with-python/
 cap = cv2.VideoCapture(0)
 
 while True:
+    
+    # Read arduino reply
+    if ser.in_waiting > 0:
+            line = ser.readline().decode('utf-8').rstrip()
+            print(line)
+    
     _, frame = cap.read()
     hsv_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 #https://www.geeksforgeeks.org/webcam-qr-code-scanner-using-opencv/
-    data, bbox, _ = detector.detectAndDecode(frame)
-    if data == "https://www.linkedin.com/in/thierry-klougbo-880b071b1/":
-        print(countCalc)
-        calcCirc()
-        
+#     data, bbox, _ = detector.detectAndDecode(frame)
+#     if data == "https://www.linkedin.com/in/thierry-klougbo-880b071b1/":
+#         if(countCalc == 0):
+#             calcCirc(countCalc)
+#             countCalc =+1
+    
+    if(countCalc == 0):
+            calcCirc(countCalc)
+            countCalc =+1
     
     # Blue color
     low_blue = np.array([94, 80, 2])
@@ -106,15 +114,19 @@ while True:
 #             elif len(approx) == 4:
 #                 cv2.putText(result_blue, "Rectangle", (x, y), 3, 1, (255, 255, 255))
 #                 if(countCalc == 0):
-#                     calcCirc()
-                #centerShape = getCenterContour(result_blue)
+#                     calcCirc(countCalc)
+#                     countCalc =+1
+#                 #centerShape = getCenterContour(result_blue)
 #             elif 10 < len(approx) < 20:
 #                 cv2.putText(result_blue, "Circle", (x, y), 3, 1, (255, 255, 255))
         
     #Show results
-    cv2.imshow("Frame", frame)    
+#     cv2.imshow("Frame", frame)    
 #     cv2.imshow("Blue", result_blue)
     
     key = cv2.waitKey(1)
     if key == 27:
         break
+
+
+
