@@ -1,5 +1,5 @@
 
-// #include <SoftwareSerial.h>
+#include <SoftwareSerial.h>
 
 int oldSpeed = 0;
 int goSpeed= 150; // Snelheid motor 1
@@ -22,7 +22,7 @@ int running = 0;
 int data = 0; //Data van bluetooth module
 const byte rxPin = 11;
 const byte txPin = 12;
-// SoftwareSerial mySerial = SoftwareSerial(rxPin, txPin);
+SoftwareSerial mySerial = SoftwareSerial(rxPin, txPin);
 
 /* Wheel Encoder*/
 int wheelPin1 = 9; //Pin voor data wiel 1 (linker wiel, oranje draad)
@@ -44,15 +44,15 @@ const float pi = 3.14;
 // PeriSensor
 int periDataFront = 0; // Data voor perimeter sensor aan de voorkant
 int periDataRight = 0; // Data voor perimeter sensor aan de rechterkant
-int periPinFront = 2; // Pin voor perimeter sensor aan de voorkant A0
-int periPinRight = 4; // Pin voor perimeter sensor aan de rechterkant A1
+int periPinFront = A0; // Pin voor perimeter sensor aan de voorkant A0
+int periPinRight = A1; // Pin voor perimeter sensor aan de rechterkant A1
 int turning = 0;
 int degreeToTurn = 0;
 int stopedTurning = 0; 
 int count = 0;
 
 //Battery
-const int analogInPin = 35; // Pin lezen batterij A2
+const int analogInPin = A2; // Pin lezen batterij A2
 
 //Oppervlakte
 int seenEnd = 0;
@@ -79,7 +79,7 @@ void setup() {
   
   pinMode(rxPin, INPUT);
   pinMode(txPin, OUTPUT);
-  // mySerial.begin(9600);
+  mySerial.begin(9600);
 
    // Set all the motor control pins to outputs
   pinMode(enA, OUTPUT);
@@ -157,15 +157,15 @@ void loop() {
   //       Serial.println("portOne overflow!");
   //   }
   
-  // if(mySerial.available() > 0){
-  //   int data2 = mySerial.read();
-  //   Serial.println(data2);
-  //   if(data == 251){ //s
-  //     searchingForDock = 1;
-  //     foundDock = 0;
-  //     rotateLeft(goSpeed, goSpeed2);
-  //   }
-  // }
+  if(mySerial.available() > 0){
+    int data2 = mySerial.read();
+    Serial.println(data2);
+    if(data2 == 115){ //s
+      searchingForDock = 1;
+      foundDock = 0;
+      rotateLeft(goSpeed, goSpeed2);
+    }
+  }
   
   // readEncoder();
   // Serial.println("w1: "+String(getCounter1()));
