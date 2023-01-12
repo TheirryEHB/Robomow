@@ -2,7 +2,7 @@
 #include <SoftwareSerial.h>
 
 int oldSpeed = 0;
-int goSpeed= 150; // Snelheid motor 1
+int goSpeed= 170; // Snelheid motor 1 ,links
 int goSpeed2 = 255; // Snelheid motor 2
 const int motor_offset = 5;
 
@@ -205,21 +205,26 @@ void loop() {
       // calculateCircumflex();
       first = 0;
       calculatingCirc = 1;
+      degreeToTurn = 900;
       goForward(goSpeed, goSpeed2);
     }
     else if(data == 'r' ){
-      Serial.println("FoundDock");
-      foundDock = 1;
-      // stopRotateDegree();
-      degreeToTurn = 300;
-      rotatdeDegreeRight(goSpeed, goSpeed2);
+      if(calculatingCirc == 0){
+        Serial.println("FoundDock");
+        foundDock = 1;
+        // stopRotateDegree();
+        degreeToTurn = 300;
+        rotatdeDegreeRight(goSpeed, goSpeed2);
+      }
     }
     else if(data == 'l' ){
-      Serial.println("FoundDock");
-      foundDock = 1;
-      // stopRotateDegree();
-      degreeToTurn = 300;
-      rotateDegreeLeft(goSpeed, goSpeed2);
+      if(calculatingCirc == 0){
+        Serial.println("FoundDock");
+        foundDock = 1;
+        // stopRotateDegree();
+        degreeToTurn = 300;
+        rotateDegreeLeft(goSpeed, goSpeed2);
+      }
     }
     else if(data == 's'){
       searchingForDock = 1;
@@ -321,7 +326,8 @@ void readPerimeters(){
   periDataRight = analogRead(periPinRight); //groen gijs
   // Serial.println("SensorDataRight: " + String(periDataRight));
   interrupts();
-  if(periDataFront > 20){
+  if(periDataFront > 400){
+    // Serial.println("perifront:  " + String(periDataFront));
     if(wheelPings1 > 1 and setPingsDone == 0){
       pingsWhenStraight1 = wheelPings1;
       pingsWhenStraight2 = wheelPings2;
@@ -509,14 +515,18 @@ void stopRotateDegree(){
       }
       else if(first == 1){
         dis2 = (getDistanceFromPings(pingsWhenStraight1) + getDistanceFromPings(pingsWhenStraight2))/2;
-        
+        calculatingCirc = 0;
+        doneCalculatingCirc = 1;
+        first = 0;
+        Serial.println("dis1: " + String(dis1));
+        Serial.println("dis2: " + String(dis2));
       }
       else if(first == 2){
         calculatingCirc = 0;
         doneCalculatingCirc = 1;
         first = 0;
 
-         Serial.println("dis1: " + String(dis1));
+        Serial.println("dis1: " + String(dis1));
         Serial.println("dis2: " + String(dis2));
       }
       Serial.println("wheelpingsStraigth1: " + String(pingsWhenStraight1));
