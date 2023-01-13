@@ -44,8 +44,8 @@ def turnLeft():
 
 def calcCirc(countCalc1):
     if(countCalc1 == 0):
+        ser.write(b't')
         print("fsda")
-        ser.write(b'9')
     
     
 #https://pysource.com/2019/02/15/detecting-colors-hsv-color-space-opencv-with-python/
