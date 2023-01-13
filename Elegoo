@@ -183,7 +183,7 @@ void loop() {
     else if(data == '8'){
       driveStraight(100, goSpeed);
     }
-    else if(data == '9'){
+    else if(data == 't'){
       Serial.println("received: " + String(data)); 
       first = 0;
       calculatingCirc = 1;
