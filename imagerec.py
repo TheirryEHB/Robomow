@@ -13,7 +13,7 @@ detector = cv2.QRCodeDetector()
 ser = serial.Serial('/dev/ttyACM0', 9600)
 ser.reset_input_buffer()
 s = [0]
-# global countCalc
+global countCalc
 countCalc = 0
 
 def getCenterContour(frame):
@@ -44,8 +44,10 @@ def turnLeft():
 
 def calcCirc(countCalc1):
     if(countCalc1 == 0):
+        countCalc =+ 1
         ser.write(b't')
-        print("fsda")
+        print(countCalc)
+        
     
     
 #https://pysource.com/2019/02/15/detecting-colors-hsv-color-space-opencv-with-python/
@@ -66,10 +68,12 @@ while True:
 #         if(countCalc == 0):
 #             calcCirc(countCalc)
 #             countCalc =+1
-    
+
+#     calcCirc(countCalc)
     if(countCalc == 0):
-            calcCirc(countCalc)
-            countCalc =+1
+        print("cc: " + str(countCalc))
+        calcCirc(countCalc)
+        
     
     # Blue color
     low_blue = np.array([94, 80, 2])
@@ -127,6 +131,3 @@ while True:
     key = cv2.waitKey(1)
     if key == 27:
         break
-
-
-
