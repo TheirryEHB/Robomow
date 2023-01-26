@@ -2,8 +2,8 @@
 #include <SoftwareSerial.h>
 
 int oldSpeed = 0;
-int goSpeed= 170; // Snelheid motor 1 ,links
-int goSpeed2 = 255; // Snelheid motor 2
+int goSpeed= 128; // Snelheid motor 1 ,links
+int goSpeed2 = 255; // Snelheid motor 2 --> rechts krijgt vaak te wijnig kracht
 const int motor_offset = 5;
 
 /* Motor A connections*/
@@ -111,7 +111,7 @@ void setup() {
 void loop() {
  
   float batteryVoltage = getBatteryStatus();
-  readPerimeters();
+  // readPerimeters();
 
   if(running == 1){
     readEncoder();
@@ -155,7 +155,7 @@ void loop() {
 
   if(Serial.available() > 0) { // Checks whether data is comming form the serial port
     data = Serial.read();
-    Serial.println("Notreceived: " + String(data)); 
+    // Serial.println("Notreceived: " + String(data)); 
 
     if(data == '1'){
       rotateLeft(goSpeed, goSpeed2);
@@ -375,21 +375,26 @@ int getCounter2(){
   Return distance traveled by wheel 1 in cm
   */
 int getDistance1(){
-  distance1 = ((2*pi*R)/N) * getCounter1();
-  return distance1;
-}
-int getDistanceFromPings(int ps){
-  distance1 = ((2*pi*R)/N) * ps;
+  distance1 = (((2*pi*R)/N) * getCounter1())/2;
   return distance1;
 }
 /*
   Return distance traveled by wheel 2 in cm
   */
 int getDistance2(){
-  distance2 = ((2*pi*R)/N) * getCounter2();
+  distance2 = (((2*pi*R)/N) * getCounter2())/2;
   return distance2;
 }
-
+/*
+  Returns the distance depending on the number of pings @{code: ps} in cm
+*/
+int getDistanceFromPings(int ps){
+  distance1 = (((2*pi*R)/N) * ps)/2;
+  return distance1;
+}
+/*
+  Returns the number of pings needed to travel distance @{code: dis} in cm
+*/
 long getPingsDistance(int dis){
   return dis/((2*pi*R)/N);
 }
@@ -503,16 +508,16 @@ void stopRotateDegree(){
         Serial.println("dis1: " + String(dis1));
         Serial.println("dis2: " + String(dis2));
       }
-      else if(first == 2){
-        calculatingCirc = 0;
-        doneCalculatingCirc = 1;
-        first = 0;
+      // else if(first == 2){
+      //   calculatingCirc = 0;
+      //   doneCalculatingCirc = 1;
+      //   first = 0;
 
-        Serial.println("dis1: " + String(dis1));
-        Serial.println("dis2: " + String(dis2));
-      }
+      //   Serial.println("dis1: " + String(dis1));
+      //   Serial.println("dis2: " + String(dis2));
+      // }
       Serial.println("wheelpingsStraigth1: " + String(pingsWhenStraight1));
-        Serial.println("wheelpingsStraigth2: " + String(pingsWhenStraight2));
+      Serial.println("wheelpingsStraigth2: " + String(pingsWhenStraight2));
     }
     first = first+1;
     // Serial.println("first is: " + String(wheelPingsWhenStopped2));
@@ -564,8 +569,8 @@ void Stop(){
   analogWrite(enA, 0);
   analogWrite(enB, 0);
 
-  // Serial.println("wheelpings1: " + String(wheelPingsWhenStopped1));
-  // Serial.println("wheelpings2: " + String(wheelPingsWhenStopped2));
+  Serial.println("wheelpings1: " + String(wheelPingsWhenStopped1));
+  Serial.println("wheelpings2: " + String(wheelPingsWhenStopped2));
   setValuesToZero();
 }
 
