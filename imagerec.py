@@ -13,8 +13,10 @@ detector = cv2.QRCodeDetector()
 ser = serial.Serial('/dev/ttyACM0', 9600)
 ser.reset_input_buffer()
 s = [0]
-global countCalc
+# global countCalc
 countCalc = 0
+#Calculate distance to shape
+
 
 def getCenterContour(frame):
     #https://www.geeksforgeeks.org/python-opencv-find-center-of-contour/
@@ -37,17 +39,29 @@ def distanceCalculate(p1, p2):
 
 def turnRight():
     ser.write(b'r')
-    print("do R")
+#     print("do R")
 def turnLeft():
     ser.write(b'l')
-    print("do L")
+#     print("do L")
 
-def calcCirc(countCalc1):
-    if(countCalc1 == 0):
-        countCalc =+ 1
-        ser.write(b't')
-        print(countCalc)
-        
+def calcCirc():
+    global countCalc
+#     while countCalc < 3:
+    ser.write(b't')
+    countCalc += 1
+#     print(countCalc)
+
+def calcRadius(countour):
+    # Find the largest contour and use it to compute the minimum enclosing triangle
+    c = max(countour, key=cv2.contourArea)
+    (x, y), radius = cv2.minEnclosingTriangle(c)
+    
+    # Use the triangle's radius as the size of the shape
+    shape_size = radius
+    
+    # Set the focal length and principal point of the camera
+    focal_length = 3.84
+    principal_point = (320, 240)
     
     
 #https://pysource.com/2019/02/15/detecting-colors-hsv-color-space-opencv-with-python/
@@ -68,11 +82,10 @@ while True:
 #         if(countCalc == 0):
 #             calcCirc(countCalc)
 #             countCalc =+1
-
-#     calcCirc(countCalc)
-    if(countCalc == 0):
-        print("cc: " + str(countCalc))
-        calcCirc(countCalc)
+    
+    if(countCalc < 3):
+        calcCirc()
+  
         
     
     # Blue color
@@ -93,20 +106,31 @@ while True:
     kernel = np.ones((5, 5), np.uint8)
     mask =  cv2.erode(blue_mask, kernel)
     contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    
+    
     for cnt in contours:
         area = cv2.contourArea(cnt)
         approx = cv2.approxPolyDP(cnt, 0.02*cv2.arcLength(cnt, True), True)
         x = approx.ravel()[0]
         y = approx.ravel()[1]
         
+        
         if area > 400:
             cv2.drawContours(result_blue, [approx], 0, (0, 0, 0), 5)
             if len(approx) == 3:
                 cv2.putText(result_blue, "Triangle", (x, y), 3, 1, (255, 255, 255))
                 if(countCalc == 0):
+                    #calc distance to travel
+                    
+                    # second method calculate distance to travel
+                    ## get contour sizes
+                    xt,yt,wt,ht = cv2.boundinRect(cnt)
+                    print(str(xt))
+                    cv2.putText(result_blue, str(wt), (xt,yt), 3, 1, (255, 255, 255))
+                    #calc distance to turn
                     centerShape = getCenterContour(result_blue)
-                    dis = distanceCalculate((w//2, h//2), centerShape)
-                    if(dis > 2):
+                    turnDis = distanceCalculate((w//2, h//2), centerShape)
+                    if(turnDis > 2):
                         if(centerShape[0] > 340):
                             turnRight()
                             # Wait for 300milliseconds
@@ -126,8 +150,11 @@ while True:
         
     #Show results
 #     cv2.imshow("Frame", frame)    
-#     cv2.imshow("Blue", result_blue)
+    cv2.imshow("Blue", result_blue)
     
     key = cv2.waitKey(1)
     if key == 27:
         break
+
+
+
