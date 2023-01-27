@@ -16,9 +16,10 @@ s = [0]
 # global countCalc
 countCalc = 0
 #Calculate distance to shape
+tempFL = 645.3333333333334
 
 ### 
-# Het centrum van de gevonden shapes vinden.
+    # Het centrum van de gevonden shapes vinden.
 ###
 def getCenterContour(frame):
     #https://www.geeksforgeeks.org/python-opencv-find-center-of-contour/
@@ -28,12 +29,13 @@ def getCenterContour(frame):
         cx = int(M['m10']/M['m00'])
         cy = int(M['m01']/M['m00'])
         cv2.circle(frame, (cx, cy), 7, (0, 0, 255), -1)
+        cv2.putText(frame, "center", (cx - 20, cy - 20),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2)
         return (cx, cy)
-        #cv2.putText(frame, "center", (cx - 20, cy - 20),
-         #           cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2)
+        
 
 ###
-# Berekenen afstand tussen Robomow en een shape
+    # Berekenen afstand centrum gevonden shape en middelpunt camerabeeld.
 ###
 def distanceCalculate(p1, p2):
     #p1 and p2 in format (x1,y1) and (x2,y2) tuples
@@ -43,21 +45,21 @@ def distanceCalculate(p1, p2):
     return dis
 
 ###
-# Signaal naar Robomow sturen om naar rechts te draaien.
+    # Signaal naar Robomow sturen om naar rechts te draaien.
 ###
 def turnRight():
     ser.write(b'r')
 #     print("do R")
 
 ###
-# Signaal naar Robomow sturen om naar rechts te draaien.
+    # Signaal naar Robomow sturen om naar rechts te draaien.
 ###
 def turnLeft():
     ser.write(b'l')
 #     print("do L")
 
 ###
-# Signaal naar Robomow sturen om de omtrek te beginnen bereken.
+    # Signaal naar Robomow sturen om de omtrek te beginnen bereken.
 ###
 def calcCirc():
     global countCalc
@@ -67,8 +69,8 @@ def calcCirc():
 #     print(countCalc)
 
 ###
-# Bereken om trek gevonden shape.
-# Dit kan gebruikt worden om de afstand tussen de shape en Robomow te bereken.
+    # Bereken omtrek gevonden shape.
+    # Dit kan gebruikt worden om de afstand tussen de shape en Robomow te bereken.
 ###
 def calcRadius(countour):
     # Find the largest contour and use it to compute the minimum enclosing triangle
@@ -81,7 +83,23 @@ def calcRadius(countour):
     # Set the focal length and principal point of the camera
     focal_length = 3.84
     principal_point = (320, 240)
+
+###
+    # Berekenen Focal Length van mijn camera. Met dit kan ik de afstand tussen de shapes en Robomow berekenen
+###
+def calcFocalLength():
+    knownDis = 44
+    known_width = 7.5
+    digiWidthInPixels = 110 
     
+    focL = (digiWidthInPixels * knownDis)/known_width
+    print(focL)
+
+###
+    # Berekenen afstand tussen shape en Robomow.
+###
+def calcDistanceToCam(widthInPixels):
+    return (7.5*tempFL)/widthInPixels
 
 ###
     # Beeldherkenning gedeelte.
@@ -106,8 +124,8 @@ while True:
 #             calcCirc(countCalc)
 #             countCalc =+1
     
-    if(countCalc < 3):
-        calcCirc()
+#     if(countCalc < 3):
+#         calcCirc()
   
         
     
@@ -137,7 +155,6 @@ while True:
         x = approx.ravel()[0]
         y = approx.ravel()[1]
         
-        
         if area > 400:
             cv2.drawContours(result_blue, [approx], 0, (0, 0, 0), 5)
             if len(approx) == 3:
@@ -147,9 +164,12 @@ while True:
                     
                     # second method calculate distance to travel
                     ## get contour sizes
-                    xt,yt,wt,ht = cv2.boundinRect(cnt)
-                    print(str(xt))
+                    xt,yt,wt,ht = cv2.boundingRect(cnt)
                     cv2.putText(result_blue, str(wt), (xt,yt), 3, 1, (255, 255, 255))
+                    ndis = calcDistanceToCam(wt)
+                    print(ndis)
+#                     calcDisToShape(cnt)
+                    
                     #calc distance to turn
                     centerShape = getCenterContour(result_blue)
                     turnDis = distanceCalculate((w//2, h//2), centerShape)
@@ -162,8 +182,15 @@ while True:
                             turnLeft()
                             #time.sleep(0.500)
                     
-#             elif len(approx) == 4:
-#                 cv2.putText(result_blue, "Rectangle", (x, y), 3, 1, (255, 255, 255))
+            elif len(approx) == 4:
+                cv2.putText(result_blue, "Rectangle", (x, y), 3, 1, (255, 255, 255))
+#                 xt,yt,wt,ht = cv2.boundingRect(cnt)
+#                 print(str(wt))
+#                 cv2.putText(result_blue, str(wt), (x,y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (36,255,12), 2)
+#                 cv2.rectangle(result_blue, (xt, yt), (xt + wt, yt + ht), (36,255,12), 1)
+#                 calcFocalLength()
+                
+#                 cv2.putText(result_blue, str(wt), (xt,yt), 3, 1, (255, 255, 255))
 #                 if(countCalc == 0):
 #                     calcCirc(countCalc)
 #                     countCalc =+1
@@ -178,3 +205,6 @@ while True:
     key = cv2.waitKey(1)
     if key == 27:
         break
+
+
+
