@@ -17,7 +17,9 @@ s = [0]
 countCalc = 0
 #Calculate distance to shape
 
-
+### 
+# Het centrum van de gevonden shapes vinden.
+###
 def getCenterContour(frame):
     #https://www.geeksforgeeks.org/python-opencv-find-center-of-contour/
     #https://pyimagesearch.com/2016/02/01/opencv-center-of-contour/
@@ -29,7 +31,10 @@ def getCenterContour(frame):
         return (cx, cy)
         #cv2.putText(frame, "center", (cx - 20, cy - 20),
          #           cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2)
-         
+
+###
+# Berekenen afstand tussen Robomow en een shape
+###
 def distanceCalculate(p1, p2):
     #p1 and p2 in format (x1,y1) and (x2,y2) tuples
     #p1 is the center of the entire frame, p2 is the center of the contour
@@ -37,13 +42,23 @@ def distanceCalculate(p1, p2):
     #print("X frame: " + str(p1[0]) + "X shape: " + str(p2[0]))
     return dis
 
+###
+# Signaal naar Robomow sturen om naar rechts te draaien.
+###
 def turnRight():
     ser.write(b'r')
 #     print("do R")
+
+###
+# Signaal naar Robomow sturen om naar rechts te draaien.
+###
 def turnLeft():
     ser.write(b'l')
 #     print("do L")
 
+###
+# Signaal naar Robomow sturen om de omtrek te beginnen bereken.
+###
 def calcCirc():
     global countCalc
 #     while countCalc < 3:
@@ -51,6 +66,10 @@ def calcCirc():
     countCalc += 1
 #     print(countCalc)
 
+###
+# Bereken om trek gevonden shape.
+# Dit kan gebruikt worden om de afstand tussen de shape en Robomow te bereken.
+###
 def calcRadius(countour):
     # Find the largest contour and use it to compute the minimum enclosing triangle
     c = max(countour, key=cv2.contourArea)
@@ -63,6 +82,10 @@ def calcRadius(countour):
     focal_length = 3.84
     principal_point = (320, 240)
     
+
+###
+    # Beeldherkenning gedeelte.
+###
     
 #https://pysource.com/2019/02/15/detecting-colors-hsv-color-space-opencv-with-python/
 cap = cv2.VideoCapture(0)
@@ -155,6 +178,3 @@ while True:
     key = cv2.waitKey(1)
     if key == 27:
         break
-
-
-
