@@ -184,7 +184,7 @@ void loop() {
       driveStraight(100, goSpeed);
     }
     else if(data == 't'){ // Begin berekeken opp
-      Serial.println("received: " + String(data)); 
+//      Serial.println("received: " + String(data)); 
       first = 0;
       calculatingCirc = 1;
       degreeToTurn = 900;
@@ -192,20 +192,20 @@ void loop() {
     }
     else if(data == 'r' ){ // Dock gevonden, maar ligt rechts
       if(calculatingCirc == 0){
-        Serial.println("FoundDock");
+//        Serial.println("FoundDock");
         foundDock = 1;
         // stopRotateDegree();
         degreeToTurn = 100;
-        rotatdeDegreeRight(goSpeed, goSpeed2);
+        rotatdeDegreeRight(128, 128);
       }
     }
     else if(data == 'l' ){ // Dock gevonden, maar ligt links
       if(calculatingCirc == 0){
-        Serial.println("FoundDock");
+//        Serial.println("FoundDock");
         foundDock = 1;
         // stopRotateDegree();
         degreeToTurn = 100;
-        rotateDegreeLeft(goSpeed, goSpeed2);
+        rotateDegreeLeft(128, 128);
       }
     }
     else if(data == 's'){ // Begin zoeken dock
@@ -588,8 +588,8 @@ void Stop(){
   analogWrite(enA, 0);
   analogWrite(enB, 0);
 
-  Serial.println("wheelpings1: " + String(wheelPingsWhenStopped1));
-  Serial.println("wheelpings2: " + String(wheelPingsWhenStopped2));
+//  Serial.println("wheelpings1: " + String(wheelPingsWhenStopped1));
+//  Serial.println("wheelpings2: " + String(wheelPingsWhenStopped2));
   setValuesToZero();
 }
 
