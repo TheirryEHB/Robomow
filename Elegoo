@@ -195,7 +195,7 @@ void loop() {
         Serial.println("FoundDock");
         foundDock = 1;
         // stopRotateDegree();
-        degreeToTurn = 300;
+        degreeToTurn = 100;
         rotatdeDegreeRight(goSpeed, goSpeed2);
       }
     }
@@ -204,7 +204,7 @@ void loop() {
         Serial.println("FoundDock");
         foundDock = 1;
         // stopRotateDegree();
-        degreeToTurn = 300;
+        degreeToTurn = 100;
         rotateDegreeLeft(goSpeed, goSpeed2);
       }
     }
