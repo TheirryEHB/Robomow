@@ -40,7 +40,8 @@ def getCenterContour(frame):
 def distanceCalculate(p1, p2):
     #p1 and p2 in format (x1,y1) and (x2,y2) tuples
     #p1 is the center of the entire frame, p2 is the center of the contour
-    dis = ((p2[0] - p1[0]) ** 2 + (p2[1] - p1[1]) ** 2) ** 0.5
+#     dis = ((p2[0] - p1[0]) ** 2 + (p2[1] - p1[1]) ** 2) ** 0.5
+    dis = ((p2[0] - p1[0]) ** 2)
     #print("X frame: " + str(p1[0]) + "X shape: " + str(p2[0]))
     return dis
 
@@ -99,7 +100,7 @@ def calcFocalLength():
     # Berekenen afstand tussen shape en Robomow.
 ###
 def calcDistanceToCam(widthInPixels):
-    return (7.5*tempFL)/widthInPixels
+    return (12*tempFL)/widthInPixels
 
 ###
     # Beeldherkenning gedeelte.
@@ -165,22 +166,45 @@ while True:
                     # second method calculate distance to travel
                     ## get contour sizes
                     xt,yt,wt,ht = cv2.boundingRect(cnt)
-                    cv2.putText(result_blue, str(wt), (xt,yt), 3, 1, (255, 255, 255))
+#                     cv2.putText(result_blue, str(wt), (xt,yt), 3, 1, (255, 255, 255))
                     ndis = calcDistanceToCam(wt)
-                    print(ndis)
+                    print("str dis: "+ str(ndis))
 #                     calcDisToShape(cnt)
                     
                     #calc distance to turn
                     centerShape = getCenterContour(result_blue)
                     turnDis = distanceCalculate((w//2, h//2), centerShape)
-                    if(turnDis > 2):
-                        if(centerShape[0] > 340):
-                            turnRight()
-                            # Wait for 300milliseconds
-                            #time.sleep(0.500)
-                        if(centerShape[0] < 300):
-                            turnLeft()
-                            #time.sleep(0.500)
+                    print("turndis: " + str(turnDis))
+                    if(ndis > 50):
+                        if(turnDis >= 51):
+                            if(centerShape[0] >= 340):
+                                turnRight()
+                                # Wait for 300milliseconds
+                                #time.sleep(0.500)
+                            if(centerShape[0] < 340):
+                                turnLeft()
+                                #time.sleep(0.500)
+                        elif(turnDis < 25):
+                            if(ndis > 10):
+                                ser.write(b'2')
+                            elif(ndis <= 10):
+                                ser.write(b'6')
+                    elif(ndis <= 50):
+                        if(turnDis >= 225):
+                            if(centerShape[0] >= 353):
+                                turnRight()
+                                # Wait for 300milliseconds
+                                #time.sleep(0.500)
+                            if(centerShape[0] < 353):
+                                turnLeft()
+                                #time.sleep(0.500)
+                        elif(turnDis < 225):
+                            if(ndis > 25):
+                                ser.write(b'2')
+                            elif(ndis <= 25):
+                                ser.write(b'6')
+
+                            
                     
             elif len(approx) == 4:
                 cv2.putText(result_blue, "Rectangle", (x, y), 3, 1, (255, 255, 255))
@@ -205,6 +229,4 @@ while True:
     key = cv2.waitKey(1)
     if key == 27:
         break
-
-
 
