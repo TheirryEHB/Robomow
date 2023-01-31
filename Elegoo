@@ -48,6 +48,7 @@ int periPinFront = A0; // Pin voor perimeter sensor aan de voorkant
 int periPinRight = A1; // Pin voor perimeter sensor aan de rechterkant
 int turning = 0;
 int degreeToTurn = 0;
+int degreeToTurn90 = 900;
 int stopedTurning = 0; 
 int count = 0;
 
@@ -70,6 +71,12 @@ int setPingsDone = 0;
 int searchingForDock = 0; // Is Robomow aan het zoeken voor de dock?
 int foundDock = 0; // Heeft Robomow de dock gevonden?
 int allignedToDock = 0; // Staat Robomow recht tegenover de dock?
+
+//Cutting grass
+int cutting = 0; // Is Robomow cutting the grass?
+int doneCutting = 0; // Is Robomow done cutting the grass?
+int maxUpDown = 0; // How many times Robomow should go up and down
+int whentUpDown = 0; // How many times Robomow has gone up and down
 
 
 void setup() {
@@ -111,7 +118,7 @@ void setup() {
 void loop() {
  
   float batteryVoltage = getBatteryStatus();
-  // readPerimeters();
+  readPerimeters();
 
   if(running == 1){ //Encoder mag enkel worden afgelezen als Robomow aan het rijden is
     readEncoder();
@@ -125,10 +132,16 @@ void loop() {
       doneCalculatingCirc = 0;
       Stop();
     }
+    if(doneCutting == 1 && cutting ==0){
+      Stop();
+    }
     if(turning == 1){ 
       stopRotateDegree();
       if(calculatingCirc == 1 && turning == 0){ //--> TODO
         goForward(goSpeed, goSpeed2);
+      }
+      if(cutting == 1 && doneCutting == 0){
+        startCuttingGrass();
       }
     }
     
@@ -136,7 +149,7 @@ void loop() {
 
   if(searchingForDock == 1 && foundDock == 0){ //Dock zoeken
     // Serial.println("rotating");
-      // rotateLeft(goSpeed, goSpeed2);
+      // rotateLeft(150, 150);
   }
   // if (mySerial.overflow()) {
   //       Serial.println("portOne overflow!");
@@ -184,11 +197,8 @@ void loop() {
       driveStraight(100, goSpeed);
     }
     else if(data == 't'){ // Begin berekeken opp
-//      Serial.println("received: " + String(data)); 
-      first = 0;
-      calculatingCirc = 1;
-      degreeToTurn = 900;
-      goForward(goSpeed, goSpeed2);
+      // Serial.println("received: " + String(data)); 
+      startCalcCirc();
     }
     else if(data == 'r' ){ // Dock gevonden, maar ligt rechts
       if(calculatingCirc == 0){
@@ -213,8 +223,35 @@ void loop() {
       foundDock = 0;
       rotateLeft(goSpeed, goSpeed2);
     }
+    else if(data == 'c'){
+      startCuttingGrass();
+    }
   }
 
+}
+
+void startCalcCirc(){
+  first = 0;
+  calculatingCirc = 1;
+  degreeToTurn = degreeToTurn90;
+  goForward(goSpeed, goSpeed2);
+}
+
+void startCuttingGrass(){
+  if(cutting = 0){
+    startCalcCirc();
+    maxUpDown = circumflex / dis1;
+  }
+  if(whentUpDown < maxUpDown){
+    cutting = 1;
+    degreeToTurn = degreeToTurn90 * 2;
+    whentUpDown++;
+    goForward(goSpeed, goSpeed2);
+  }
+  else if(whentUpDown == maxUpDown){
+    cutting = 0;
+    doneCutting = 1;
+  }
 }
 
 /**
@@ -519,6 +556,7 @@ void stopRotateDegree(){
         first = 0;
         Serial.println("dis1: " + String(dis1));
         Serial.println("dis2: " + String(dis2));
+        Serial.println("doneCirc");
       }
       // else if(first == 2){
       //   calculatingCirc = 0;
