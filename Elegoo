@@ -38,8 +38,9 @@ int oldWheelData2 = 2;
 int distance1 = 0; // distance traveled by Robomow (for now: since activation)
 int distance2 = 0;
 const int R = 9; //Radius of wheel
-const int N = 119; //Gemiddelde pings per rotatie
+const int N = 3410; //Gemiddelde pings per rotatie
 const float pi = 3.14;
+const int lengthRobo = 55;
 
 // PeriSensor
 int periDataFront = 0; // Data voor perimeter sensor aan de voorkant
@@ -112,6 +113,8 @@ void setup() {
   // attachInterrupt(digitalPinToInterrupt(wheelPin2), readEncoder, CHANGE);
 
   delay(1000);
+  startCalcCirc();
+//  goForward(goSpeed, goSpeed2);
 
 }
 
@@ -122,6 +125,9 @@ void loop() {
 
   if(running == 1){ //Encoder mag enkel worden afgelezen als Robomow aan het rijden is
     readEncoder();
+//    if(wheelPings1 ==3410){
+//      Stop();
+//    }
 
     if(searchingForDock == 1 && foundDock == 1){ //Dock gevonden
       Serial.println("Stop");
@@ -416,21 +422,21 @@ int getCounter2(){
   Return distance traveled by wheel 1 in cm
   */
 int getDistance1(){
-  distance1 = (((2*pi*R)/N) * getCounter1())/2;
+  distance1 = (((2*pi*R)/N) * getCounter1()) + lengthRobo;
   return distance1;
 }
 /*
   Return distance traveled by wheel 2 in cm
   */
 int getDistance2(){
-  distance2 = (((2*pi*R)/N) * getCounter2())/2;
+  distance2 = (((2*pi*R)/N) * getCounter2()) + lengthRobo;
   return distance2;
 }
 /*
   Returns the distance depending on the number of pings @{code: ps} in cm
 */
 int getDistanceFromPings(int ps){
-  distance1 = (((2*pi*R)/N) * ps)/2;
+  distance1 = (((2*pi*R)/N) * ps) + lengthRobo;
   return distance1;
 }
 /*
@@ -547,16 +553,16 @@ void stopRotateDegree(){
     stopedTurning = 1;
      if(calculatingCirc == 1){ //Berekenen opp
       if(first == 0){
-        dis1 = (getDistanceFromPings(pingsWhenStraight1) + getDistanceFromPings(pingsWhenStraight2))/2;
+        dis1 = getDistanceFromPings(pingsWhenStraight1);
       }
       else if(first == 1){ 
-        dis2 = (getDistanceFromPings(pingsWhenStraight1) + getDistanceFromPings(pingsWhenStraight2))/2;
+        dis2 = getDistanceFromPings(pingsWhenStraight1);
         calculatingCirc = 0;
         doneCalculatingCirc = 1;
         first = 0;
         Serial.println("dis1: " + String(dis1));
         Serial.println("dis2: " + String(dis2));
-        Serial.println("doneCirc");
+//        Serial.println("doneCirc");
       }
       // else if(first == 2){
       //   calculatingCirc = 0;
