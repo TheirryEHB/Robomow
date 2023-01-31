@@ -70,22 +70,6 @@ def calcCirc():
 #     print(countCalc)
 
 ###
-    # Bereken omtrek gevonden shape.
-    # Dit kan gebruikt worden om de afstand tussen de shape en Robomow te bereken.
-###
-def calcRadius(countour):
-    # Find the largest contour and use it to compute the minimum enclosing triangle
-    c = max(countour, key=cv2.contourArea)
-    (x, y), radius = cv2.minEnclosingTriangle(c)
-    
-    # Use the triangle's radius as the size of the shape
-    shape_size = radius
-    
-    # Set the focal length and principal point of the camera
-    focal_length = 3.84
-    principal_point = (320, 240)
-
-###
     # Berekenen Focal Length van mijn camera. Met dit kan ik de afstand tussen de shapes en Robomow berekenen
 ###
 def calcFocalLength():
@@ -115,15 +99,18 @@ while True:
     if ser.in_waiting > 0:
             line = ser.readline().decode('utf-8').rstrip()
             print(line)
+            if(line == "doneCirc"):
+                countCalc = 0
     
     _, frame = cap.read()
     hsv_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 #https://www.geeksforgeeks.org/webcam-qr-code-scanner-using-opencv/
-#     data, bbox, _ = detector.detectAndDecode(frame)
-#     if data == "https://www.linkedin.com/in/thierry-klougbo-880b071b1/":
-#         if(countCalc == 0):
-#             calcCirc(countCalc)
-#             countCalc =+1
+    data, bbox, _ = detector.detectAndDecode(frame)
+    
+    if data == "https://www.linkedin.com/in/thierry-klougbo-880b071b1/":
+        if(countCalc == 0):
+            calcCirc()
+            countCalc =+1
     
 #     if(countCalc < 3):
 #         calcCirc()
@@ -223,10 +210,9 @@ while True:
 #                 cv2.putText(result_blue, "Circle", (x, y), 3, 1, (255, 255, 255))
         
     #Show results
-#     cv2.imshow("Frame", frame)    
-    cv2.imshow("Blue", result_blue)
+    cv2.imshow("Frame", frame)    
+#     cv2.imshow("Blue", result_blue)
     
     key = cv2.waitKey(1)
     if key == 27:
         break
-
