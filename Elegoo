@@ -113,9 +113,9 @@ void setup() {
   // attachInterrupt(digitalPinToInterrupt(wheelPin2), readEncoder, CHANGE);
 
   delay(1000);
-  startCalcCirc();
+//  startCalcCirc();
 //  goForward(goSpeed, goSpeed2);
-
+  startCuttingGrass();
 }
 
 void loop() {
@@ -137,8 +137,14 @@ void loop() {
       circumflex = dis1 * dis2;
       doneCalculatingCirc = 0;
       Stop();
+      if(cutting == 1){
+        maxUpDown = circumflex / dis1;
+        Serial.println("circ: " + String(circumflex));
+        Serial.println("maxUpD: " + String(maxUpDown));
+        startCuttingGrass();
+      }
     }
-    if(doneCutting == 1 && cutting ==0){
+    if(doneCutting == 1 && cutting == 0){
       Stop();
     }
     if(turning == 1){ 
@@ -152,6 +158,7 @@ void loop() {
     }
     
   }
+  
 
   if(searchingForDock == 1 && foundDock == 0){ //Dock zoeken
     // Serial.println("rotating");
@@ -244,20 +251,26 @@ void startCalcCirc(){
 }
 
 void startCuttingGrass(){
-  if(cutting = 0){
+  Serial.println("cuttin: " + String(cutting));
+  if(cutting == 0){
+    cutting == 1;
     startCalcCirc();
-    maxUpDown = circumflex / dis1;
   }
-  if(whentUpDown < maxUpDown){
-    cutting = 1;
-    degreeToTurn = degreeToTurn90 * 2;
-    whentUpDown++;
-    goForward(goSpeed, goSpeed2);
+  
+  else if(cutting == 1){
+    Serial.println("wentup: " + String(whentUpDown));
+    if(whentUpDown < maxUpDown){
+      degreeToTurn = degreeToTurn90 * 2;
+      whentUpDown++;
+      goForward(goSpeed, goSpeed2);
+    }
+    else if(whentUpDown == maxUpDown){
+      cutting = 0;
+      doneCutting = 1;
+    }
+    
   }
-  else if(whentUpDown == maxUpDown){
-    cutting = 0;
-    doneCutting = 1;
-  }
+  
 }
 
 /**
@@ -562,18 +575,12 @@ void stopRotateDegree(){
         first = 0;
         Serial.println("dis1: " + String(dis1));
         Serial.println("dis2: " + String(dis2));
-//        Serial.println("doneCirc");
+        circumflex = dis1 * dis2;
+        Serial.println("circ1: " + String(circumflex));
       }
-      // else if(first == 2){
-      //   calculatingCirc = 0;
-      //   doneCalculatingCirc = 1;
-      //   first = 0;
-
-      //   Serial.println("dis1: " + String(dis1));
-      //   Serial.println("dis2: " + String(dis2));
-      // }
-      Serial.println("wheelpingsStraigth1: " + String(pingsWhenStraight1));
-      Serial.println("wheelpingsStraigth2: " + String(pingsWhenStraight2));
+     
+//      Serial.println("wheelpingsStraigth1: " + String(pingsWhenStraight1));
+//      Serial.println("wheelpingsStraigth2: " + String(pingsWhenStraight2));
     }
     first = first+1;
     // Serial.println("first is: " + String(wheelPingsWhenStopped2));
@@ -635,6 +642,7 @@ void Stop(){
 //  Serial.println("wheelpings1: " + String(wheelPingsWhenStopped1));
 //  Serial.println("wheelpings2: " + String(wheelPingsWhenStopped2));
   setValuesToZero();
+  
 }
 
 /**
