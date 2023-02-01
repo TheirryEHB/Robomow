@@ -152,9 +152,9 @@ void loop() {
       if(calculatingCirc == 1 && turning == 0){ //--> TODO
         goForward(goSpeed, goSpeed2);
       }
-      if(cutting == 1 && doneCutting == 0){
-        startCuttingGrass();
-      }
+//      if(cutting == 1 && doneCutting == 0){
+//        startCuttingGrass();
+//      }
     }
     
   }
@@ -247,14 +247,16 @@ void startCalcCirc(){
   first = 0;
   calculatingCirc = 1;
   degreeToTurn = degreeToTurn90;
+  Serial.println("startin");
   goForward(goSpeed, goSpeed2);
 }
 
 void startCuttingGrass(){
   Serial.println("cuttin: " + String(cutting));
   if(cutting == 0){
-    cutting == 1;
+    cutting = 1;
     startCalcCirc();
+    Serial.println("cuttin: " + String(cutting));
   }
   
   else if(cutting == 1){
