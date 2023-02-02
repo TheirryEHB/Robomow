@@ -136,6 +136,7 @@ void loop() {
     if(doneCalculatingCirc == 1 && calculatingCirc == 0){ // Klaar berekenen opp
       circumflex = dis1 * dis2;
       doneCalculatingCirc = 0;
+      
       Stop();
       if(cutting == 1){
         maxUpDown = circumflex / dis1;
@@ -569,12 +570,14 @@ void stopRotateDegree(){
      if(calculatingCirc == 1){ //Berekenen opp
       if(first == 0){
         dis1 = getDistanceFromPings(pingsWhenStraight1);
+        Serial.println("pings1: " + String(pingsWhenStraight1))); //Niet weg doen
       }
       else if(first == 1){ 
         dis2 = getDistanceFromPings(pingsWhenStraight1);
         calculatingCirc = 0;
         doneCalculatingCirc = 1;
         first = 0;
+        Serial.println("pings2: " + String(pingsWhenStraight1))); //Niet weg doen
         Serial.println("dis1: " + String(dis1));
         Serial.println("dis2: " + String(dis2));
         circumflex = dis1 * dis2;
