@@ -17,6 +17,10 @@ s = [0]
 countCalc = 0
 #Calculate distance to shape
 tempFL = 645.3333333333334
+pingsPerRot = 3410
+arrayHoogte = []
+arrayBasis = []
+currentPosRob = [m, m]
 
 ### 
     # Het centrum van de gevonden shapes vinden.
@@ -101,6 +105,18 @@ while True:
             print(line)
             if(line == "doneCirc"):
                 countCalc = 0
+            if("pings1: " in line):
+                pings = line[7]
+                cels1 = math.floor(pings/pingsPerRot)
+                for i in range(0, cles1 + 1):
+                    arrayHoogte.append("H"+i)
+                currentPosRob[1] = arrayHoogte[len(arrayHoogte) -1]
+            if("pings2: " in line):
+                pings = line[7]
+                cels2 = math.floor(pings/pingsPerRot)
+                for i in range(0, cles2 + 1):
+                    arrayBasis.append("B"+i)
+                currentPosRob[0] = arrayBasis[len(arrayBasis) - 1]
     
     _, frame = cap.read()
     hsv_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
@@ -216,3 +232,6 @@ while True:
     key = cv2.waitKey(1)
     if key == 27:
         break
+
+
+
