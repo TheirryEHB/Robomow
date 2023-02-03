@@ -91,6 +91,15 @@ def calcFocalLength():
 def calcDistanceToCam(widthInPixels):
     return (12*tempFL)/widthInPixels
 
+def makeMatrixEven(ar1, ar2):
+    if(len(ar1) > len(ar2)):
+        for i in range(0, len(ar1) - len(ar2)):
+            ar2.append("N0")
+    if(len(ar2) > len(ar1)):
+        for i in range(0, len(ar2) - len(ar1)):
+            ar1.append("N0")
+       
+
 ###
     # Beeldherkenning gedeelte.
 ###
@@ -109,18 +118,20 @@ while True:
             if("pings1: " in line):
                 pings = line[8:]
                 cels1 = math.floor(int(pings)/(pingsPerRot/4))
-                print(cels1)
+#                 print(cels1)
                 for i in range(0, cels1 + 1):
                     arrayHoogte.append("H"+ str(i))
                 currentPosRob[1] = arrayHoogte[len(arrayHoogte) -1]
-                print(arrayHoogte)
+                
             if("pings2: " in line):
                 pings = line[8:]
                 cels2 = math.floor(int(pings)/(pingsPerRot/4))
                 for i in range(0, cels2 + 1):
                     arrayBasis.append("B"+ str(i))
                 currentPosRob[0] = arrayBasis[len(arrayBasis) - 1]
+                makeMatrixEven(arrayHoogte, arrayBasis)
                 print(arrayBasis)
+                print(arrayHoogte)
 #                 cap.release()
     
     _, frame = cap.read()
