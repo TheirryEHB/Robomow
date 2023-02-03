@@ -3,6 +3,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 import time
 import serial
+import math
 
 print(cv2.__version__)
 
@@ -20,7 +21,7 @@ tempFL = 645.3333333333334
 pingsPerRot = 3410
 arrayHoogte = []
 arrayBasis = []
-currentPosRob = [m, m]
+currentPosRob = [0, 0]
 
 ### 
     # Het centrum van de gevonden shapes vinden.
@@ -106,17 +107,21 @@ while True:
             if(line == "doneCirc"):
                 countCalc = 0
             if("pings1: " in line):
-                pings = line[7]
-                cels1 = math.floor(pings/pingsPerRot)
-                for i in range(0, cles1 + 1):
-                    arrayHoogte.append("H"+i)
+                pings = line[8:]
+                cels1 = math.floor(int(pings)/(pingsPerRot/4))
+                print(cels1)
+                for i in range(0, cels1 + 1):
+                    arrayHoogte.append("H"+ str(i))
                 currentPosRob[1] = arrayHoogte[len(arrayHoogte) -1]
+                print(arrayHoogte)
             if("pings2: " in line):
-                pings = line[7]
-                cels2 = math.floor(pings/pingsPerRot)
-                for i in range(0, cles2 + 1):
-                    arrayBasis.append("B"+i)
+                pings = line[8:]
+                cels2 = math.floor(int(pings)/(pingsPerRot/4))
+                for i in range(0, cels2 + 1):
+                    arrayBasis.append("B"+ str(i))
                 currentPosRob[0] = arrayBasis[len(arrayBasis) - 1]
+                print(arrayBasis)
+#                 cap.release()
     
     _, frame = cap.read()
     hsv_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
@@ -233,5 +238,7 @@ while True:
     if key == 27:
         break
 
-
+if(countCalc == 0):
+            calcCirc()
+            countCalc =+1
 
