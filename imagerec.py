@@ -13,7 +13,7 @@ detector = cv2.QRCodeDetector()
 
 #https://www.instructables.com/Raspberry-Pi-Arduino-Serial-Communication/
 #https://www.arrow.com/en/research-and-events/articles/raspberry-pi-to-arduino-serial-communication-via-usb
-ser = serial.Serial('/dev/ttyACM0', 9600)
+ser = serial.Serial('/dev/ttyACM0', 9600, timeout=1)
 ser.reset_input_buffer()
 s = [0]
 # global countCalc
@@ -50,46 +50,55 @@ def changeOrLeft(degree):
         currOrientation = currOrientation + degree
     if(currOrientation + degree >= 360):
         currOrientation = abs(degree - (360 - currOrientation))
-    print(currOrientation)
+#     print(currOrientation)
 def changeOrRight(degree):
     global currOrientation
     if(currOrientation - degree >= 0):
         currOrientation = currOrientation - degree
     if(currOrientation - degree < 0):
         currOrientation = 360 - (degree - currOrientation)
-    print(currOrientation)
-# print(currOrientation)
-# changeOrRight(360-270)       
+#     print(currOrientation)
+
+# ser.write(b'turn left: ' + str(degreesToTurn).encode("utf-8")+ b'\n')
+
 def matrixGoRight():
-    if(currOrientation < 270):
+    if(currOrientation < 270): # turn left until looking at right side field
 #         degreesToTurn = 270 - currOrientation
         degreesToTurn = 270 - currOrientation
         changeOrRight(360-degreesToTurn)
-        print("R turn left: " + str(degreesToTurn))
+        ser.write(b'turn left: ' + str(degreesToTurn).encode("utf-8")+ b'\n')
+#         print("R turn left: " + str(degreesToTurn))
         #turn degrees to left
     elif(currOrientation >= 270):
         degreesToTurn = currOrientation - 270
         changeOrRight(degreesToTurn)
-        print("R turn right: " + str(degreesToTurn))
+        ser.write(b'turn right: ' + str(degreesToTurn).encode("utf-8")+ b'\n')
+#         print("R turn right: " + str(degreesToTurn))
         #turn degrees to right
     
 def matrixGoLeft():
     if(currOrientatiion < 90):
         degreesToTurn = 90 - currOrientation
         changeOrLeft(degreesToTurn)
-        print("L turn right: " + str(degreesToTurn))
+        ser.write(b'turn right: ' + str(degreesToTurn).encode("utf-8")+ b'\n')
+#         print("L turn right: " + str(degreesToTurn))
         #turn degrees to right
     elif(currOrientatiion >= 90):
         degreesToTurn = currOrientation - 90
         changeOrLeft(degreesToTurn)
-        print("L turn left: " + str(degreesToTurn))
+        ser.write(b'turn left: ' + str(degreesToTurn).encode("utf-8")+ b'\n')
+#         print("L turn left: " + str(degreesToTurn))
         #turn degrees to left
 
 def matrixGoForward():
-#     print(currOrientation)
-    degreesToTurn = 360 - currOrientation
-    changeOrLeft(degreesToTurn)
-    print("turn hella left: " + str(degreesToTurn))
+    if(currOrientation > 45 and currOrientation < 315):
+        degreesToTurn = 360 - currOrientation
+        changeOrLeft(degreesToTurn)
+        ser.write(b'turn left: ' + str(degreesToTurn).encode("utf-8")+ b'\n')
+    else:
+        changeOrLeft(0)
+        ser.write(b'turn left: ' + b'0' + b'\n')
+#     print("turn hella left: " + str(degreesToTurn))
     #turn degrees to left
     
 def matrixGoBack():
@@ -268,14 +277,14 @@ def distanceCalculate(p1, p2):
     # Signaal naar Robomow sturen om naar rechts te draaien.
 ###
 def turnRight():
-    ser.write(b'r')
+    ser.write(b'r\n')
 #     print("do R")
 
 ###
     # Signaal naar Robomow sturen om naar rechts te draaien.
 ###
 def turnLeft():
-    ser.write(b'l')
+    ser.write(b'l\n')
 #     print("do L")
 
 ###
@@ -284,7 +293,7 @@ def turnLeft():
 def calcCirc():
     global countCalc
 #     while countCalc < 3:
-    ser.write(b't')
+    ser.write(b't\n')
     countCalc += 1
 #     print(countCalc)
 
@@ -468,6 +477,21 @@ def imageRec():
         key = cv2.waitKey(1)
         if key == 27:
             break
+
+while True:
+    # Read arduino reply
+    if ser.in_waiting > 0:
+        line = ser.readline().decode('utf-8').rstrip()
+        print(line)
+        if(line == "doneCirc"):
+            countCalc = 0
+        if("pings1: " in line):
+            pings = line[8:]
+            cels1 = math.floor(int(pings)/(pingsPerRot/4))
+#                 print(cels1)
+            for i in range(0, cels1 + 1):
+                arrayHoogte.append("H"+ str(i))
+            currentPosRob[1] = arrayHoogte[len(arrayHoogte) -1]
 
 # if(countCalc == 0):
 #             calcCirc()
