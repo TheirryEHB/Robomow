@@ -45,53 +45,67 @@ def changeOrLeft(degree):
 #         currOrientation = currOrientation + degree
 #     if(currOrientatiion+degree > 180):
 #         currOrientatiion = -90 - degree
+    global currOrientation
     if(currOrientation + degree < 360):
         currOrientation = currOrientation + degree
     if(currOrientation + degree >= 360):
-        currOrientation = degree - (360 - currOrientation)
+        currOrientation = abs(degree - (360 - currOrientation))
+    print(currOrientation)
 def changeOrRight(degree):
+    global currOrientation
     if(currOrientation - degree >= 0):
         currOrientation = currOrientation - degree
     if(currOrientation - degree < 0):
         currOrientation = 360 - (degree - currOrientation)
-        
+    print(currOrientation)
+# print(currOrientation)
+# changeOrRight(360-270)       
 def matrixGoRight():
     if(currOrientation < 270):
+#         degreesToTurn = 270 - currOrientation
         degreesToTurn = 270 - currOrientation
-        print("turn left")
+        changeOrRight(360-degreesToTurn)
+        print("R turn left: " + str(degreesToTurn))
         #turn degrees to left
     elif(currOrientation >= 270):
         degreesToTurn = currOrientation - 270
-        print("turn right")
+        changeOrRight(degreesToTurn)
+        print("R turn right: " + str(degreesToTurn))
         #turn degrees to right
     
 def matrixGoLeft():
     if(currOrientatiion < 90):
         degreesToTurn = 90 - currOrientation
-        print("turn right")
+        changeOrLeft(degreesToTurn)
+        print("L turn right: " + str(degreesToTurn))
         #turn degrees to right
     elif(currOrientatiion >= 90):
         degreesToTurn = currOrientation - 90
-        print("turn left")
+        changeOrLeft(degreesToTurn)
+        print("L turn left: " + str(degreesToTurn))
         #turn degrees to left
 
 def matrixGoForward():
-    degreesToTurn = currOrientation
-    print("turn hella left")
+#     print(currOrientation)
+    degreesToTurn = 360 - currOrientation
+    changeOrLeft(degreesToTurn)
+    print("turn hella left: " + str(degreesToTurn))
     #turn degrees to left
     
 def matrixGoBack():
     if(currOrientatiion < 180):
         degreesToTurn = 180 - currOrientatiion
-        print("turn left")
+        changeOrLeft(degreesToTurn)
+        print("B turn left: " + str(degreesToTurn))
         #turn degrees to left
     elif(currOrientatiion >= 180):
         degreesToTurn = currOrientatiion - 180
-        print("turn right")
+        changeOrLeft(degreesToTurn)
+        print("B turn right: " + str(degreesToTurn))
         #turn degrees to right
 
 def calcMatrixGoDirection(pointToGo):
-    print(currentPosRob)
+#     print(currentPosRob)
     if(pointToGo[1] == currentPosRob[1]): # turn left or right
         if(pointToGo[0] > currentPosRob[0]):
             matrixGoRight()
@@ -135,11 +149,11 @@ class ShortestPathBetweenCellsBFS :
         sy = start[1]
         dx = end[0]
         dy = end[1]
-		#if start or end value is 0, return
+        #if start or end value is 0, return
         if matrix[sx][sy] == 0 or matrix[dx][dy] == 0 :
             print("There is no path.")
-            return  
-		#initialize the cells 
+            return
+        #initialize the cells 
         m = len(matrix)
         n = len(matrix[0])    
         cells = []
@@ -187,14 +201,13 @@ class ShortestPathBetweenCellsBFS :
                 p = p.prev     
             for i in path:
                 shortestRout.append([i.x, i.y])
-                print(shortestRout)
 
     #function to update cell visiting status, Time O(1), Space O(1)
     def visit(self, cells, queue, x, y, parent) :
         #out of boundary
         if x < 0 or x >= len(cells) or y < 0 or y >= len(cells[0]) or cells[x][y] == None :
-	        return
-	    #update distance, and previous node
+            return
+        #update distance, and previous node
         dist = parent.dist + 1
         p = cells[x][y]
         if dist < p.dist :
@@ -208,12 +221,13 @@ def calcShortestRoute():
     myObj = ShortestPathBetweenCellsBFS()   
     #case1, there is no path
     start = [3, 2]
-    currentPosRob = [3, 2]
+    currentPosRob = start
     end = [4, 4]
 #     print(matrix)
     # print(matrix[0])
     print("case 1: ")
     myObj.shortestPath(matrix, start, end)
+    print(shortestRout)
     for i in shortestRout:
         if(i != currentPosRob):
             calcMatrixGoDirection(i)
