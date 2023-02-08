@@ -19,7 +19,7 @@ int relaisStatus = 0; //Status relay
 int running = 0;
 
 /*Bluetooth module*/
-int data = 0; //Data van bluetooth module
+String data = ""; //Data van bluetooth module
 // const byte rxPin = 11;
 // const byte txPin = 12;
 // SoftwareSerial mySerial = SoftwareSerial(rxPin, txPin);
@@ -115,7 +115,7 @@ void setup() {
   delay(1000);
 //  startCalcCirc();
 //  goForward(goSpeed, goSpeed2);
-  startCuttingGrass();
+//  startCuttingGrass();
 }
 
 void loop() {
@@ -181,40 +181,55 @@ void loop() {
   
 
   if(Serial.available() > 0) { // Checks whether data is comming form the serial port
-    data = Serial.read();
-    // Serial.println("Notreceived: " + String(data)); 
+//    int datae = Serial.read();
+//    Serial.println("öllolollla");
+   data = Serial.readStringUntil('\n');
+   Serial.println("Notreceived: " + String(data));
+//   Serial.println(String(data).indexOf("left"));
+    if(data.indexOf("l") == 5){
+      if(data.length() == 14){ //3 char angle
+        Serial.println(data.substring(11,14));
+      }
+      else if(data.length() == 13){
+        Serial.println(data.substring(11,13));
+      }
+      else if(data.length() == 12){
+        Serial.println(data.substring(11,12));
+      }
+      
+      
+    }
 
-    if(data == '1'){
+    if(data == "1"){
       rotateLeft(goSpeed, goSpeed2);
     }
-    else if(data == '2'){
+    else if(data == "2"){
       goForward(goSpeed, goSpeed2);
     }
-    else if(data == '3'){
+    else if(data == "3"){
       rotateRight(goSpeed, goSpeed2);
     }
-    else if(data == '4'){
+    else if(data == "4"){
       goBackward(goSpeed, goSpeed2);
     }
-    else if(data == '5'){
+    else if(data == "5"){
       goForward(goSpeed, goSpeed2);
     }
-    else if(data == '6'){
+    else if(data == "6"){
       Stop();
     }
-    else if(data == '7'){
+    else if(data == "7"){
       //Draai 90 graden
       degreeToTurn = 1100; //Niet meer 90
       rotateDegreeLeft(goSpeed, goSpeed2);
     }
-    else if(data == '8'){
+    else if(data == "8"){
       driveStraight(100, goSpeed);
     }
-    else if(data == 't'){ // Begin berekeken opp
-      // Serial.println("received: " + String(data)); 
+    else if(data == "t"){ // Begin berekeken opp
       startCalcCirc();
     }
-    else if(data == 'r' ){ // Dock gevonden, maar ligt rechts
+    else if(data == "r"){ // Dock gevonden, maar ligt rechts
       if(calculatingCirc == 0){
 //        Serial.println("FoundDock");
         foundDock = 1;
@@ -223,7 +238,8 @@ void loop() {
         rotatdeDegreeRight(128, 128);
       }
     }
-    else if(data == 'l' ){ // Dock gevonden, maar ligt links
+    else if(data == "l"){ // Dock gevonden, maar ligt links
+      Serial.println("received: " + String(data)); 
       if(calculatingCirc == 0){
 //        Serial.println("FoundDock");
         foundDock = 1;
@@ -232,12 +248,12 @@ void loop() {
         rotateDegreeLeft(128, 128);
       }
     }
-    else if(data == 's'){ // Begin zoeken dock
+    else if(data == "s"){ // Begin zoeken dock
       searchingForDock = 1;
       foundDock = 0;
       rotateLeft(goSpeed, goSpeed2);
     }
-    else if(data == 'c'){
+    else if(data == "c"){
       startCuttingGrass();
     }
   }
@@ -570,14 +586,14 @@ void stopRotateDegree(){
      if(calculatingCirc == 1){ //Berekenen opp
       if(first == 0){
         dis1 = getDistanceFromPings(pingsWhenStraight1);
-        Serial.println("pings1: " + String(pingsWhenStraight1))); //Niet weg doen
+        Serial.println("pings1: " + String(pingsWhenStraight1)); //Niet weg doen
       }
       else if(first == 1){ 
         dis2 = getDistanceFromPings(pingsWhenStraight1);
         calculatingCirc = 0;
         doneCalculatingCirc = 1;
         first = 0;
-        Serial.println("pings2: " + String(pingsWhenStraight1))); //Niet weg doen
+        Serial.println("pings2: " + String(pingsWhenStraight1)); //Niet weg doen
         Serial.println("dis1: " + String(dis1));
         Serial.println("dis2: " + String(dis2));
         circumflex = dis1 * dis2;
