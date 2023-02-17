@@ -93,16 +93,29 @@ void loop() {
   // Match the request
   int val;
 
+  if(req == "2"){
+    myString = req+'\n';
+    Serial.write(myString.c_str());
+  }
+  if(req == "6"){
+    myString = req+'\n';
+    Serial.write(myString.c_str());
+  }
+  
   if(req.indexOf(F("/2/0")) != -1){
     myString = req.substring(5, req.length()-11)+'\n';
     // Serial.print(req.substring(5, req.length()-11)+'\n');
     Serial.write(myString.c_str());
   }
-
-  if(Serial.available()){
-    // Serial.println(Serial.readString());
-    client.print(Serial.readString());
+  else if(req.indexOf(F("/6/0")) != -1){
+    myString = req.substring(5, req.length()-11)+'\n';
+    Serial.write(myString.c_str());
   }
+
+  // if(Serial.available()){
+  //   // Serial.println(Serial.readString());
+  //   client.print(Serial.readString());
+  // }
 
   // Set LED according to the request
   digitalWrite(LED_BUILTIN, val);
@@ -125,7 +138,11 @@ void loop() {
   client.print(WiFi.localIP());
   client.print(F("/gpio/0'>here</a> to switch LED GPIO off. Or use this: <a href='http://"));
   client.print(WiFi.localIP());
-  client.print("/2/0'>code</a> .</html>");
+  client.print("/2/0'>code</a> .");
+  client.print(F("<a href='http://"));
+  client.print(WiFi.localIP());
+  client.print(F("/6/0'>Stop</a>."));
+  client.print("</html>");
   // client.print(myString);
 
   // The client will actually be *flushed* then disconnected
