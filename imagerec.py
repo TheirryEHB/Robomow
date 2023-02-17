@@ -7,6 +7,14 @@ import math
 import sys
 import queue
 
+# esp8266 communication
+import socket
+ip = '192.168.0.165'
+port = 3000
+conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+conn.connect((ip, port))
+conn.send("2".encode())
+
 print(cv2.__version__)
 
 detector = cv2.QRCodeDetector()
