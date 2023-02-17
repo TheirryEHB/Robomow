@@ -9,14 +9,15 @@ import queue
 
 # esp8266 communication
 import socket
-
-# from win32comext.shell.demos.IActiveDesktop import cnt
-
+# https://medium.com/analytics-vidhya/esp8266-python-connection-in-arduino-based-system-5d4a308bd79b
 ip = '192.168.0.165'
-port = 3000
+port = 80
 conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 conn.connect((ip, port))
-conn.send("2".encode())
+conn.send("6".encode())
+# time.sleep(5)
+# conn.send("6".encode())
+
 
 print(cv2.__version__)
 
