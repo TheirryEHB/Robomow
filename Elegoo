@@ -50,6 +50,7 @@ int periPinRight = A1; // Pin voor perimeter sensor aan de rechterkant
 int turning = 0;
 int degreeToTurn = 0;
 int degreeToTurn90 = 900;
+int degreeToTurn1 = degreeToTurn90 / 90;
 int stopedTurning = 0; 
 int count = 0;
 
@@ -79,10 +80,12 @@ int doneCutting = 0; // Is Robomow done cutting the grass?
 int maxUpDown = 0; // How many times Robomow should go up and down
 int whentUpDown = 0; // How many times Robomow has gone up and down
 
+//Moving in matrix
+int moveMatrix = 0;
 
 void setup() {
   
-  Serial.begin(9600);
+  Serial.begin(115200); //9600
   Serial.setTimeout(1000);
   
   // pinMode(rxPin, INPUT);
@@ -182,22 +185,32 @@ void loop() {
 
   if(Serial.available() > 0) { // Checks whether data is comming form the serial port
 //    int datae = Serial.read();
-//    Serial.println("öllolollla");
    data = Serial.readStringUntil('\n');
    Serial.println("Notreceived: " + String(data));
 //   Serial.println(String(data).indexOf("left"));
     if(data.indexOf("l") == 5){
       if(data.length() == 14){ //3 char angle
+        moveMatrix = 1;
         Serial.println(data.substring(11,14));
+        int angl = data.substring(11,14).toInt();
+        degreeToPings(angl);
+        rotateDegreeLeft(goSpeed, goSpeed2);
       }
-      else if(data.length() == 13){
+      else if(data.length() == 13){ // 2 char angle
+        moveMatrix = 1;
         Serial.println(data.substring(11,13));
+        int angl = data.substring(11,13).toInt();
+        degreeToPings(angl);
+        rotateDegreeLeft(goSpeed, goSpeed2);
       }
-      else if(data.length() == 12){
+      else if(data.length() == 12){ // 1 char angle
+        moveMatrix = 1;
         Serial.println(data.substring(11,12));
+        int angl = data.substring(11,12).toInt();
+        degreeToPings(angl);
+        rotateDegreeLeft(goSpeed, goSpeed2);
       }
-      
-      
+  
     }
 
     if(data == "1"){
@@ -572,6 +585,10 @@ void rotateLeft(int motorSpeed1, int motorSpeed2){
   
 }
 
+void degreeToPings(int deg){
+  degreeToTurn = degreeToTurn1 * deg;
+}
+
 /**
   Stop met draaien als het aantal pings van wiel2 {@code wheelPingsWhenStopped2} 
   een bepaalde hoeveelheid {@code degreeToTurn} heeft bereikt.
@@ -602,6 +619,10 @@ void stopRotateDegree(){
      
 //      Serial.println("wheelpingsStraigth1: " + String(pingsWhenStraight1));
 //      Serial.println("wheelpingsStraigth2: " + String(pingsWhenStraight2));
+    }
+    if(moveMatrix == 1){
+      moveMatrix = 0;
+      Serial.write("Done matrix Turn");
     }
     first = first+1;
     // Serial.println("first is: " + String(wheelPingsWhenStopped2));
