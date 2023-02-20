@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import requests
 from matplotlib import pyplot as plt
 import time
 import serial
@@ -15,12 +16,17 @@ port = 80
 conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 conn.connect((ip, port))
 conn.send("6".encode())
-# time.sleep(5)
-# conn.send("6".encode())
+# conn.listen()
+(clientsocket, address) = conn.accept()
+while 1:
+    data = clientsocket.recv(128)
+    datastr = buffer + data.decode('utf-8')
+    split = datastr.split("\n")
+    buffer = split[-1]
+    print(split[:-1])
 
 
 print(cv2.__version__)
-
 detector = cv2.QRCodeDetector()
 
 # https://www.instructables.com/Raspberry-Pi-Arduino-Serial-Communication/
@@ -42,6 +48,7 @@ shortestRout = []
 neighbours = []
 closestNeighbour = [1, 1]
 weight = 0
+turnArray = []
 
 ## Orientation
 currOrientation = 0
@@ -62,18 +69,14 @@ def changeOrLeft(degree):
         currOrientation = currOrientation + degree
     if currOrientation + degree >= 360:
         currOrientation = abs(degree - (360 - currOrientation))
-
-
-#     print(currOrientation)
+    # print(currOrientation)
 def changeOrRight(degree):
     global currOrientation
     if currOrientation - degree >= 0:
         currOrientation = currOrientation - degree
     if currOrientation - degree < 0:
         currOrientation = 360 - (degree - currOrientation)
-
-
-#     print(currOrientation)
+    # print(currOrientation)
 
 # ser.write(b'turn left: ' + str(degreesToTurn).encode("utf-8")+ b'\n')
 
@@ -82,57 +85,67 @@ def matrixGoRight():
         #         degreesToTurn = 270 - currOrientation
         degreesToTurn = 270 - currOrientation
         changeOrRight(360 - degreesToTurn)
+        stri = "turn left: "+str(degreesToTurn)
+        sendTurnData(stri)
         # ser.write(b'turn left: ' + str(degreesToTurn).encode("utf-8") + b'\n')
-    #         print("R turn left: " + str(degreesToTurn))
+        # print("R turn left: " + str(degreesToTurn))
     # turn degrees to left
     elif currOrientation >= 270:
         degreesToTurn = currOrientation - 270
         changeOrRight(degreesToTurn)
+        stri = "turn right: "+str(degreesToTurn)
+        sendTurnData(stri)
         # ser.write(b'turn right: ' + str(degreesToTurn).encode("utf-8") + b'\n')
-
-
-#         print("R turn right: " + str(degreesToTurn))
-# turn degrees to right
+        # print("R turn right: " + str(degreesToTurn))
+    # turn degrees to right
 
 def matrixGoLeft():
     if currOrientation < 90:
         degreesToTurn = 90 - currOrientation
         changeOrLeft(degreesToTurn)
+        stri = "turn right: "+str(degreesToTurn)
+        sendTurnData(stri)
         # ser.write(b'turn right: ' + str(degreesToTurn).encode("utf-8") + b'\n')
-    #         print("L turn right: " + str(degreesToTurn))
+        # print("L turn right: " + str(degreesToTurn))
     # turn degrees to right
     elif currOrientation >= 90:
         degreesToTurn = currOrientation - 90
         changeOrLeft(degreesToTurn)
+        stri = "turn left: "+str(degreesToTurn)
+        sendTurnData(stri)
         # ser.write(b'turn left: ' + str(degreesToTurn).encode("utf-8") + b'\n')
-
-
-#         print("L turn left: " + str(degreesToTurn))
+        # print("L turn left: " + str(degreesToTurn))
 # turn degrees to left
 
 def matrixGoForward():
     if currOrientation > 45 and currOrientation < 315:
         degreesToTurn = 360 - currOrientation
         changeOrLeft(degreesToTurn)
+        stri = "turn left: "+str(degreesToTurn)
+        sendTurnData(stri)
         # ser.write(b'turn left: ' + str(degreesToTurn).encode("utf-8") + b'\n')
     else:
         changeOrLeft(0)
+        stri = "turn left: "+str(0)
+        sendTurnData(stri)
         # ser.write(b'turn left: ' + b'0' + b'\n')
-
-
-#     print("turn hella left: " + str(degreesToTurn))
+        # print("turn hella left: " + str(degreesToTurn))
 # turn degrees to left
 
 def matrixGoBack():
     if currOrientation < 180:
         degreesToTurn = 180 - currOrientation
         changeOrLeft(degreesToTurn)
-        print("B turn left: " + str(degreesToTurn))
+        stri = "turn left: "+str(degreesToTurn)
+        sendTurnData(stri)
+        # print("B turn left: " + str(degreesToTurn))
         # turn degrees to left
     elif currOrientation >= 180:
         degreesToTurn = currOrientation - 180
         changeOrLeft(degreesToTurn)
-        print("B turn right: " + str(degreesToTurn))
+        stri = "turn right: "+str(degreesToTurn)
+        sendTurnData(stri)
+        # print("B turn right: " + str(degreesToTurn))
         # turn degrees to right
 
 
@@ -160,6 +173,15 @@ def makeMatrix():
             natr.append([testBase[i], testHeight[a]])
         matrix.append(natr)
 
+
+def sendTurnData(strr):
+    turnArray.append(strr)
+
+
+def nextDirections():
+    if(len(turnArray) > 0):
+        conn.send(turnArray[0].encode())
+        turnArray.pop(0)
 
 makeMatrix()
 
@@ -389,6 +411,16 @@ def imageRec():
         #         print(arrayBasis)
         #         print(arrayHoogte)
         #                 cap.release()
+
+
+        # conn.listen()
+        # (clientsocket, address) = conn.accept()
+        # while 1:
+        #     data = clientsocket.recv(128)
+        #     datastr = buffer + data.decode('utf-8')
+        #     split = datastr.split("\n")
+        #     buffer = split[-1]
+        #     print(split[:-1])
 
         _, frame = cap.read()
         hsv_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
