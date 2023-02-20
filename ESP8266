@@ -76,49 +76,62 @@ void setup() {
 }
 
 void loop() {
+
   // Check if a client has connected
   WiFiClient client = server.available();
+
+  if(Serial.available() > 0){
+    String serval = Serial.readString();
+    Serial.println(serval);
+    // client.send
+    // client.write(serval.c_str());
+    client.print(serval.c_str());
+    client.flush();
+    client.stop();
+    
+    // Serial.write(Serial.readString().c_str());
+  }
+  
   if (!client) {
     return;
-  }
-  // Serial.println(F("new client"));
+  }  
 
   client.setTimeout(5000); // default is 1000
-
+   
   // Read the first line of the request
   String req = client.readStringUntil('\r');
-  // Serial.println(F("request: "));
   // Serial.println(req);
 
   // Match the request
   int val;
+  if(req != ""){
+    if(req == "2"){
+        myString = req+'\n';
+        Serial.write(myString.c_str());
+      }
+      if(req == "6"){
+        myString = req+'\n';
+        Serial.write(myString.c_str());
+      }
+      if(req.indexOf(F("turn left: ")) != -1){
+        Serial.println(req);
+        myString = req+'\n';
+        Serial.write(myString.c_str());
+      }
+      
+      if(req.indexOf(F("/2/0")) != -1){
+        myString = req.substring(5, req.length()-11)+'\n';
+        // Serial.print(req.substring(5, req.length()-11)+'\n');
+        Serial.write(myString.c_str());
+      }
+      else if(req.indexOf(F("/6/0")) != -1){
+        myString = req.substring(5, req.length()-11)+'\n';
+        Serial.write(myString.c_str());
+      }
+  }
+ 
 
-  if(req == "2"){
-    myString = req+'\n';
-    Serial.write(myString.c_str());
-  }
-  if(req == "6"){
-    myString = req+'\n';
-    Serial.write(myString.c_str());
-  }
-  
-  if(req.indexOf(F("/2/0")) != -1){
-    myString = req.substring(5, req.length()-11)+'\n';
-    // Serial.print(req.substring(5, req.length()-11)+'\n');
-    Serial.write(myString.c_str());
-  }
-  else if(req.indexOf(F("/6/0")) != -1){
-    myString = req.substring(5, req.length()-11)+'\n';
-    Serial.write(myString.c_str());
-  }
 
-  // if(Serial.available()){
-  //   // Serial.println(Serial.readString());
-  //   client.print(Serial.readString());
-  // }
-
-  // Set LED according to the request
-  digitalWrite(LED_BUILTIN, val);
 
   // read/ignore the rest of the request
   // do not client.flush(): it is for output only, see below
