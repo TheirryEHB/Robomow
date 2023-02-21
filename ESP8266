@@ -19,6 +19,7 @@
 const char* ssid = STASSID;
 const char* password = STAPSK;
 String myString = "";
+String serval = "";
 
 //Your Domain name with URL path or IP address with path
 const char* serverName = "http://192.168.0.165:1880/update-sensor";
@@ -80,55 +81,59 @@ void loop() {
   // Check if a client has connected
   WiFiClient client = server.available();
 
-  if(Serial.available() > 0){
-    String serval = Serial.readString();
+  if(Serial.available() > 0){ // Data van Arduino lezen via usb connectie
+    serval = Serial.readString();
     Serial.println(serval);
-    // client.send
-    // client.write(serval.c_str());
-    client.print(serval.c_str());
-    client.flush();
-    client.stop();
     
-    // Serial.write(Serial.readString().c_str());
+    client.write(serval.c_str());
+    // client.print(F("HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n<!DOCTYPE HTML>\r\n<html>\r\n ")); //80 char
+    // client.print(serval.c_str());
+    // client.print("</html>");
+    // client.flush();
+    // client.stop();
+    
+   
   }
+
+  // waitUntilNewReq();
+  // diitalWrite(serval)
   
   if (!client) {
     return;
   }  
 
-  client.setTimeout(5000); // default is 1000
+  // client.setTimeout(5000); // default is 1000
    
   // Read the first line of the request
   String req = client.readStringUntil('\r');
   // Serial.println(req);
 
   // Match the request
-  int val;
-  if(req != ""){
-    if(req == "2"){
-        myString = req+'\n';
-        Serial.write(myString.c_str());
-      }
-      if(req == "6"){
-        myString = req+'\n';
-        Serial.write(myString.c_str());
-      }
-      if(req.indexOf(F("turn left: ")) != -1){
-        Serial.println(req);
-        myString = req+'\n';
-        Serial.write(myString.c_str());
-      }
+  // int val;
+  // if(req != ""){
+  //   if(req == "2"){
+  //       myString = req+'\n';
+  //       Serial.write(myString.c_str());
+        
+  //     }
+  //     if(req == "6"){
+  //       myString = req+'\n';
+  //       Serial.write(myString.c_str());
+  //     }
+  //     if(req.indexOf(F("turn left: ")) != -1){
+  //       Serial.println("rerrr: " + req);
+  //       myString = req+'\n';
+  //       // Serial.write(myString.c_str());
+  //       serval = "ddd";
+  //       delay(500);
+  //       client.print(F("HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n<!DOCTYPE HTML>\r\n<html>\r\nGPIO in row "));
+  //       client.print("</html>");
+  //       client.stop();
+  //       // client.flush();
+  //     }
       
-      if(req.indexOf(F("/2/0")) != -1){
-        myString = req.substring(5, req.length()-11)+'\n';
-        // Serial.print(req.substring(5, req.length()-11)+'\n');
-        Serial.write(myString.c_str());
-      }
-      else if(req.indexOf(F("/6/0")) != -1){
-        myString = req.substring(5, req.length()-11)+'\n';
-        Serial.write(myString.c_str());
-      }
-  }
+
+  // }
  
 
 
@@ -137,25 +142,27 @@ void loop() {
   // do not client.flush(): it is for output only, see below
   while (client.available()) {
     // byte by byte is not very efficient
-    client.read();
+    // Serial.println(client.read());
+    Serial.println(client.readStringUntil('\r'));
   }
 
+  // client.print(F("dddd"));
   // Send the response to the client
   // it is OK for multiple small client.print/write,
   // because nagle algorithm will group them into one single packet
-  client.print(F("HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n<!DOCTYPE HTML>\r\n<html>\r\nGPIO is now "));
-  client.print((val) ? F("high") : F("low"));
-  client.print(F("<br><br>Click <a href='http://"));
-  client.print(WiFi.localIP());
-  client.print(F("/gpio/1'>here</a> to switch LED GPIO on, or <a href='http://"));
-  client.print(WiFi.localIP());
-  client.print(F("/gpio/0'>here</a> to switch LED GPIO off. Or use this: <a href='http://"));
-  client.print(WiFi.localIP());
-  client.print("/2/0'>code</a> .");
-  client.print(F("<a href='http://"));
-  client.print(WiFi.localIP());
-  client.print(F("/6/0'>Stop</a>."));
-  client.print("</html>");
+  // client.print(F("HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n<!DOCTYPE HTML>\r\n<html>\r\nGPIO is now "));
+  // client.print((val) ? F("high") : F("low"));
+  // client.print(F("<br><br>Click <a href='http://"));
+  // client.print(WiFi.localIP());
+  // client.print(F("/gpio/1'>here</a> to switch LED GPIO on, or <a href='http://"));
+  // client.print(WiFi.localIP());
+  // client.print(F("/gpio/0'>here</a> to switch LED GPIO off. Or use this: <a href='http://"));
+  // client.print(WiFi.localIP());
+  // client.print("/2/0'>code</a> .");
+  // client.print(F("<a href='http://"));
+  // client.print(WiFi.localIP());
+  // client.print(F("/6/0'>Stop</a>."));
+  // client.print("</html>");
   // client.print(myString);
 
   // The client will actually be *flushed* then disconnected
