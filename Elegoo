@@ -44,7 +44,7 @@ const int lengthRobo = 55;
 
 // PeriSensor
 int periDataFront = 0; // Data voor perimeter sensor aan de voorkant
-int periDataRight = 0; // Data voor perimeter sensor aan de rechterkant
+int periDataLeft = 0; // Data voor perimeter sensor aan de rechterkant
 int periPinFront = A0; // Pin voor perimeter sensor aan de voorkant
 int periPinRight = A1; // Pin voor perimeter sensor aan de rechterkant
 int turning = 0;
@@ -82,6 +82,8 @@ int whentUpDown = 0; // How many times Robomow has gone up and down
 
 //Moving in matrix
 int moveMatrix = 0;
+int wheelpingsBlock1 = 0; // When equal to 3410, one matrix section has been traveled
+int wheelpingsBlock2 = 0;
 
 void setup() {
   
@@ -128,6 +130,11 @@ void loop() {
 
   if(running == 1){ //Encoder mag enkel worden afgelezen als Robomow aan het rijden is
     readEncoder();
+    if(wheelpingsBlock1 >= (N/2) - 4 || wheelpingsBlock1 <= (N/2) + 4){
+      // send data to python
+      wheelpingsBlock1 = 0;
+      wheelpingsBlock2 = 0;
+    }
 //    if(wheelPings1 ==3410){
 //      Stop();
 //    }
@@ -168,25 +175,12 @@ void loop() {
     // Serial.println("rotating");
       // rotateLeft(150, 150);
   }
-  // if (mySerial.overflow()) {
-  //       Serial.println("portOne overflow!");
-  //   }
-  
-  // if(mySerial.available() > 0){
-  //   int data2 = mySerial.read();
-  //   Serial.println(data2);
-  //   if(data2 == 115){ //s
-  //     searchingForDock = 1;
-  //     foundDock = 0;
-  //     rotateLeft(goSpeed, goSpeed2);
-  //   }
-  // }
   
 
   if(Serial.available() > 0) { // Checks whether data is comming form the serial port
 //    int datae = Serial.read();
    data = Serial.readStringUntil('\n');
-   Serial.println("Notreceived: " + String(data));
+  //  Serial.println("Notreceived: " + String(data));
 //   Serial.println(String(data).indexOf("left"));
     if(data.indexOf("l") == 5){
       if(data.length() == 14){ //3 char angle
@@ -397,21 +391,25 @@ void readPerimeters(){
   noInterrupts();
   periDataFront = analogRead(periPinFront);
   //  Serial.println("SensorDataFront: " + String(periDataFront));
-  periDataRight = analogRead(periPinRight); //groen gijs
+  periDataLeft = analogRead(periPinRight); //groen gijs
   // Serial.println("SensorDataRight: " + String(periDataRight));
   interrupts();
-  if(periDataFront > 400){
-    // Serial.println("perifront:  " + String(periDataFront));
-    if(wheelPings1 > 1 and setPingsDone == 0){
+  if(periDataLeft > 400 && periDataFront > 400){ // links en voor vast
+     if(wheelPings1 > 1 and setPingsDone == 0){
       pingsWhenStraight1 = wheelPings1;
       pingsWhenStraight2 = wheelPings2;
       setPingsDone = 1;
     }
+    rotateDegreeRight(goSpeed, goSpeed2);
+  }
+  if(periDataLeft > 400 && periDataFront < 400){ // enkel links vast
+    goForward(goSpeed, goSpeed2);
+  }
+  if(periDataLeft < 400){ // links niet meer vast
+    degreeToTurn = degreeToTurn90;
     rotateDegreeLeft(goSpeed, goSpeed2);
   }
-  // if(periDataRight > 6){ // Als voorkant rond de 5cm van de perimeter is --> stop
-  //   rotate90Left(goSpeed, goSpeed2);
-  //  }
+
 }
 
 ///////////////////////////////////////////// Wheel Encoder part
@@ -427,6 +425,7 @@ void readEncoder(){
    
   if(wheelData1 == HIGH){
     oldWheelData1 = wheelData1;
+    wheelpingsBlock1 = oldWheelData1;
     ++wheelPings1;
     ++wheelPingsWhenStopped1;
     // Serial.println("wheeld: " + String(wheelData1) + " H1");
@@ -436,6 +435,7 @@ void readEncoder(){
   }
   if(wheelData2 == HIGH){
     oldWheelData2 = wheelData2;
+    wheelpingsBlock2 = oldWheelData2;
     ++wheelPings2;
     ++wheelPingsWhenStopped2;
     // Serial.println("wheeld2: " + String(wheelData2) + " H2");
@@ -656,7 +656,7 @@ void rotateDegreeLeft(int motorSpeed1, int motorSpeed2){
 /**
   Links draaien in een bepaalde hoek.
 **/
-void rotatdeDegreeRight(int motorSpeed1, int motorSpeed2){
+void rotateDegreeRight(int motorSpeed1, int motorSpeed2){
   setValuesToZero();
   turning = 1;
   running = 1;
