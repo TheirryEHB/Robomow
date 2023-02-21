@@ -1,4 +1,4 @@
-import cv2
+# import cv2
 import numpy as np
 import requests
 from matplotlib import pyplot as plt
@@ -8,26 +8,32 @@ import math
 import sys
 import queue
 
+bigMatrix = []
+
 # esp8266 communication
 import socket
+import urllib.request
+import httplib
 # https://medium.com/analytics-vidhya/esp8266-python-connection-in-arduino-based-system-5d4a308bd79b
-ip = '192.168.0.165'
+ip = "192.168.0.165"
 port = 80
 conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+# conn2 = ""
 conn.connect((ip, port))
-conn.send("6".encode())
+# conn.send("6".encode())
+# conn.bind(('', port))
+# conn.connect((ip, port))
 # conn.listen()
-(clientsocket, address) = conn.accept()
-while 1:
-    data = clientsocket.recv(128)
-    datastr = buffer + data.decode('utf-8')
-    split = datastr.split("\n")
-    buffer = split[-1]
-    print(split[:-1])
+url = "http://"+ip
+# nnn = urllib.request.urlopen(url).read()
+# nnn = nnn.decode("utf-8")
+# print(nnn)
+nextN = []
 
 
-print(cv2.__version__)
-detector = cv2.QRCodeDetector()
+
+# print(cv2.__version__)
+# detector = cv2.QRCodeDetector()
 
 # https://www.instructables.com/Raspberry-Pi-Arduino-Serial-Communication/
 # https://www.arrow.com/en/research-and-events/articles/raspberry-pi-to-arduino-serial-communication-via-usb
@@ -177,10 +183,10 @@ def makeMatrix():
 def sendTurnData(strr):
     turnArray.append(strr)
 
-
 def nextDirections():
     if(len(turnArray) > 0):
-        conn.send(turnArray[0].encode())
+        # print(turnArray[0])
+        conn.send((turnArray[0]+"\r").encode())
         turnArray.pop(0)
 
 makeMatrix()
@@ -298,17 +304,17 @@ calcShortestRoute()
 ###
 # Het centrum van de gevonden shapes vinden.
 ###
-def getCenterContour(frame):
-    # https://www.geeksforgeeks.org/python-opencv-find-center-of-contour/
-    # https://pyimagesearch.com/2016/02/01/opencv-center-of-contour/
-    M = cv2.moments(cnt)
-    if M['m00'] != 0:
-        cx = int(M['m10'] / M['m00'])
-        cy = int(M['m01'] / M['m00'])
-        cv2.circle(frame, (cx, cy), 7, (0, 0, 255), -1)
-        cv2.putText(frame, "center", (cx - 20, cy - 20),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2)
-        return cx, cy
+# def getCenterContour(frame):
+#     # https://www.geeksforgeeks.org/python-opencv-find-center-of-contour/
+#     # https://pyimagesearch.com/2016/02/01/opencv-center-of-contour/
+#     M = cv2.moments(cnt)
+#     if M['m00'] != 0:
+#         cx = int(M['m10'] / M['m00'])
+#         cy = int(M['m01'] / M['m00'])
+#         cv2.circle(frame, (cx, cy), 7, (0, 0, 255), -1)
+#         cv2.putText(frame, "center", (cx - 20, cy - 20),
+#                     cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2)
+#         return cx, cy
 
 
 ###
@@ -378,13 +384,18 @@ def makeMatrixEven(ar1, ar2):
             ar1.append("*")
     weight = len(ar1)
 
+def makeBigm():
+    global bigMatrix
+    s = (1000, 1000)
+    bigMatrix = np.zeros(s, dtype=int)
+    bigMatrix[1:10, 0] = 1
 
 ###
 # Beeldherkenning gedeelte.
 ###
 def imageRec():
     # https://pysource.com/2019/02/15/detecting-colors-hsv-color-space-opencv-with-python/
-    cap = cv2.VideoCapture(0)
+    # cap = cv2.VideoCapture(0)
 
     while True:
         # Read arduino reply
@@ -422,99 +433,99 @@ def imageRec():
         #     buffer = split[-1]
         #     print(split[:-1])
 
-        _, frame = cap.read()
-        hsv_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-        # https://www.geeksforgeeks.org/webcam-qr-code-scanner-using-opencv/
-        data, bbox, _ = detector.detectAndDecode(frame)
-
-        if data == "https://www.linkedin.com/in/thierry-klougbo-880b071b1/":
-            if countCalc == 0:
-                calcCirc()
-                countCalc = +1
-
-        #     if(countCalc < 3):
+        # _, frame = cap.read()
+        # hsv_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+        # # https://www.geeksforgeeks.org/webcam-qr-code-scanner-using-opencv/
+        # data, bbox, _ = detector.detectAndDecode(frame)
+        #
+        # if data == "https://www.linkedin.com/in/thierry-klougbo-880b071b1/":
+        #     if countCalc == 0:
         #         calcCirc()
-
-        # Blue color
-        low_blue = np.array([94, 80, 2])
-        high_blue = np.array([126, 255, 255])
-        blurred = cv2.GaussianBlur(hsv_frame, (7, 7), 0)
-        blue_mask = cv2.inRange(hsv_frame, low_blue, high_blue)
-        result_blue = cv2.bitwise_and(frame, frame, mask=blue_mask)
-
-        # Center of entire frame
-        # https://stackoverflow.com/questions/53029540/find-centroid-coordinate-of-whole-frame-in-opencv
-        (h, w) = result_blue.shape[:2]  # w:image-width and h:image-height
-        cv2.circle(result_blue, (w // 2, h // 2), 7, (255, 255, 255), -1)
+        #         countCalc = +1
+        #
+        # #     if(countCalc < 3):
+        # #         calcCirc()
+        #
+        # # Blue color
+        # low_blue = np.array([94, 80, 2])
+        # high_blue = np.array([126, 255, 255])
+        # blurred = cv2.GaussianBlur(hsv_frame, (7, 7), 0)
+        # blue_mask = cv2.inRange(hsv_frame, low_blue, high_blue)
+        # result_blue = cv2.bitwise_and(frame, frame, mask=blue_mask)
+        #
+        # # Center of entire frame
+        # # https://stackoverflow.com/questions/53029540/find-centroid-coordinate-of-whole-frame-in-opencv
+        # (h, w) = result_blue.shape[:2]  # w:image-width and h:image-height
+        # cv2.circle(result_blue, (w // 2, h // 2), 7, (255, 255, 255), -1)
 
         # Shape recognition
         # https://pysource.com/2018/12/29/real-time-shape-detection-opencv-with-python-3/
         # https://pysource.com/2018/03/01/find-and-draw-contours-opencv-3-4-with-python-3-tutorial-19/
-        kernel = np.ones((5, 5), np.uint8)
-        mask = cv2.erode(blue_mask, kernel)
-        contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-
-        for cnt in contours:
-            area = cv2.contourArea(cnt)
-            approx = cv2.approxPolyDP(cnt, 0.02 * cv2.arcLength(cnt, True), True)
-            x = approx.ravel()[0]
-            y = approx.ravel()[1]
-
-            if area > 400:
-                cv2.drawContours(result_blue, [approx], 0, (0, 0, 0), 5)
-                if len(approx) == 3:
-                    cv2.putText(result_blue, "Triangle", (x, y), 3, 1, (255, 255, 255))
-                    if countCalc == 0:
-                        # calc distance to travel
-
-                        # second method calculate distance to travel
-                        ## get contour sizes
-                        xt, yt, wt, ht = cv2.boundingRect(cnt)
-                        #                     cv2.putText(result_blue, str(wt), (xt,yt), 3, 1, (255, 255, 255))
-                        ndis = calcDistanceToCam(wt)
-                        print("str dis: " + str(ndis))
-                        #                     calcDisToShape(cnt)
-
-                        # calc distance to turn
-                        centerShape = getCenterContour(result_blue)
-                        turnDis = distanceCalculate((w // 2, h // 2), centerShape)
-                        print("turndis: " + str(turnDis))
-                        if ndis > 50:
-                            if turnDis >= 51:
-                                if centerShape[0] >= 340:
-                                    turnRight()
-                                    # Wait for 300milliseconds
-                                    # time.sleep(0.500)
-                                if centerShape[0] < 340:
-                                    turnLeft()
-                                    # time.sleep(0.500)
-                            elif turnDis < 25:
-                                if ndis > 10:
-                                    # ser.write(b'2')
+        # kernel = np.ones((5, 5), np.uint8)
+        # mask = cv2.erode(blue_mask, kernel)
+        # contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        #
+        # for cnt in contours:
+        #     area = cv2.contourArea(cnt)
+        #     approx = cv2.approxPolyDP(cnt, 0.02 * cv2.arcLength(cnt, True), True)
+        #     x = approx.ravel()[0]
+        #     y = approx.ravel()[1]
+        #
+        #     if area > 400:
+        #         cv2.drawContours(result_blue, [approx], 0, (0, 0, 0), 5)
+        #         if len(approx) == 3:
+        #             cv2.putText(result_blue, "Triangle", (x, y), 3, 1, (255, 255, 255))
+        #             if countCalc == 0:
+        #                 # calc distance to travel
+        #
+        #                 # second method calculate distance to travel
+        #                 ## get contour sizes
+        #                 xt, yt, wt, ht = cv2.boundingRect(cnt)
+        #                 #                     cv2.putText(result_blue, str(wt), (xt,yt), 3, 1, (255, 255, 255))
+        #                 ndis = calcDistanceToCam(wt)
+        #                 print("str dis: " + str(ndis))
+        #                 #                     calcDisToShape(cnt)
+        #
+        #                 # calc distance to turn
+        #                 centerShape = getCenterContour(result_blue)
+        #                 turnDis = distanceCalculate((w // 2, h // 2), centerShape)
+        #                 print("turndis: " + str(turnDis))
+        #                 if ndis > 50:
+        #                     if turnDis >= 51:
+        #                         if centerShape[0] >= 340:
+        #                             turnRight()
+        #                             # Wait for 300milliseconds
+        #                             # time.sleep(0.500)
+        #                         if centerShape[0] < 340:
+        #                             turnLeft()
+        #                             # time.sleep(0.500)
+        #                     elif turnDis < 25:
+        #                         if ndis > 10:
+        #                             # ser.write(b'2')
+        #                             print("TODO")
+        #                         elif ndis <= 10:
+        #                             # ser.write(b'6')
+        #                             print("TODO")
+        #                 elif ndis <= 50:
+        #                     if turnDis >= 225:
+        #                         if centerShape[0] >= 353:
+        #                             turnRight()
+        #                             # Wait for 300milliseconds
+        #                             # time.sleep(0.500)
+        #                         if centerShape[0] < 353:
+        #                             turnLeft()
+        #                             # time.sleep(0.500)
+        #                     elif turnDis < 225:
+        #                         if ndis > 25:
+        #                             # ser.write(b'2')
                                     print("TODO")
-                                elif ndis <= 10:
-                                    # ser.write(b'6')
-                                    print("TODO")
-                        elif ndis <= 50:
-                            if turnDis >= 225:
-                                if centerShape[0] >= 353:
-                                    turnRight()
-                                    # Wait for 300milliseconds
-                                    # time.sleep(0.500)
-                                if centerShape[0] < 353:
-                                    turnLeft()
-                                    # time.sleep(0.500)
-                            elif turnDis < 225:
-                                if ndis > 25:
-                                    # ser.write(b'2')
-                                    print("TODO")
-                                elif ndis <= 25:
-                                    # ser.write(b'6')
-                                    print("TODO")
-
-
-                elif len(approx) == 4:
-                    cv2.putText(result_blue, "Rectangle", (x, y), 3, 1, (255, 255, 255))
+                #                 elif ndis <= 25:
+                #                     # ser.write(b'6')
+                #                     print("TODO")
+                #
+                #
+                # elif len(approx) == 4:
+                #     cv2.putText(result_blue, "Rectangle", (x, y), 3, 1, (255, 255, 255))
         #                 xt,yt,wt,ht = cv2.boundingRect(cnt)
         #                 print(str(wt))
         #                 cv2.putText(result_blue, str(wt), (x,y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (36,255,12), 2)
@@ -530,14 +541,45 @@ def imageRec():
         #                 cv2.putText(result_blue, "Circle", (x, y), 3, 1, (255, 255, 255))
 
         # Show results
-        cv2.imshow("Frame", frame)
-        # cv2.imshow("Blue", result_blue)
+        # cv2.imshow("Frame", frame)
+        # # cv2.imshow("Blue", result_blue)
+        #
+        # key = cv2.waitKey(1)
+        # if key == 27:
+        #     break
 
-        key = cv2.waitKey(1)
-        if key == 27:
-            break
+def readFromEsp():
+    global nextN, conn2
+    # while len(turnArray) > 0:
+        # Read ESP8266 data
+    # (clientsocket, address) = conn.accept()
+    # conn2 = clientsocket
+    nextDirections()
+    time.sleep(5)
+    # nnn = urllib.request.urlopen(url).read()
+    nnn = httplib.HTTPConnection(ip, port)
 
+    nnn.add_header('Connection',"keep-alive")
 
+    nnn = nnn.decode("utf-8")
+    print(nnn)
+    newN = nnn[79:len(nnn)-7]
+    if newN != nextN:
+        nextN = newN
+    # print(nextN)
+    readFromEsp()
+
+    # buffer = ""
+    #
+    # while 1:
+    #     data = clientsocket.recv(128)
+    #     datastr = buffer + data.decode('utf-8')
+    #     print(datastr)
+    #     split = datastr.split("\n")
+    #     buffer = split[-1]
+    #     print(split[:-1])
+
+readFromEsp()
 # while True:
 #     # Read arduino reply
 #     if ser.in_waiting > 0:
