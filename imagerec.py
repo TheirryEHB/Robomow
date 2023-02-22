@@ -13,24 +13,22 @@ bigMatrix = []
 # esp8266 communication
 import socket
 import urllib.request
-import httplib
+
 # https://medium.com/analytics-vidhya/esp8266-python-connection-in-arduino-based-system-5d4a308bd79b
-ip = "192.168.0.165"
-port = 80
-conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+# ip = "192.168.0.165"
+# port = 80
+# conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 # conn2 = ""
-conn.connect((ip, port))
+# conn.connect((ip, port))
 # conn.send("6".encode())
 # conn.bind(('', port))
 # conn.connect((ip, port))
 # conn.listen()
-url = "http://"+ip
+# url = "http://"+ip
 # nnn = urllib.request.urlopen(url).read()
 # nnn = nnn.decode("utf-8")
 # print(nnn)
 nextN = []
-
-
 
 # print(cv2.__version__)
 # detector = cv2.QRCodeDetector()
@@ -45,6 +43,44 @@ countCalc = 0
 # Calculate distance to shape
 tempFL = 645.3333333333334
 pingsPerRot = 3410
+
+name = 'HC-05'
+serverMAC = 'E0-D4-64-C1-97-E1'  # mac bl 98:d3:31:f6:77:ff #mac pc E0-D4-64-C1-97-E1
+hostMac = '98:d3:31:f6:77:ff'
+port = 11
+passkey = "1234"
+
+# blu_send = socket.socket(socket.AF_BLUETOOTH, socket.SOCK_STREAM, socket.BTPROTO_RFCOMM)
+# blu_send.bind((serverMAC, port))
+# blu_send.send(bytes("2\n", 'UTF-8'))
+import signal
+
+
+def signal_handler(signal, frame):
+    print("closing program")
+    SerialPort.close()
+    sys.exit(0)
+
+
+COM = "COM11"
+BAUD = 9600
+SerialPort = serial.Serial(COM, BAUD, timeout=1)
+SerialPort.close()
+SerialPort.open()
+time.sleep(5)
+
+while 1:
+    try:
+        # OutgoingData = input('> ')
+        SerialPort.write(str("2\n").encode("utf-8"))
+    except KeyboardInterrupt:
+        print("Closing and exiting the program")
+        SerialPort.close()
+        sys.exit(0)
+    IncomingData = SerialPort.readline()
+    if IncomingData:
+        print(IncomingData.decode('utf-8'))
+    time.sleep(0.01)
 
 ## Pathfinding
 arrayHoogte = []
@@ -76,6 +112,8 @@ def changeOrLeft(degree):
     if currOrientation + degree >= 360:
         currOrientation = abs(degree - (360 - currOrientation))
     # print(currOrientation)
+
+
 def changeOrRight(degree):
     global currOrientation
     if currOrientation - degree >= 0:
@@ -84,6 +122,7 @@ def changeOrRight(degree):
         currOrientation = 360 - (degree - currOrientation)
     # print(currOrientation)
 
+
 # ser.write(b'turn left: ' + str(degreesToTurn).encode("utf-8")+ b'\n')
 
 def matrixGoRight():
@@ -91,7 +130,7 @@ def matrixGoRight():
         #         degreesToTurn = 270 - currOrientation
         degreesToTurn = 270 - currOrientation
         changeOrRight(360 - degreesToTurn)
-        stri = "turn left: "+str(degreesToTurn)
+        stri = "turn left: " + str(degreesToTurn)
         sendTurnData(stri)
         # ser.write(b'turn left: ' + str(degreesToTurn).encode("utf-8") + b'\n')
         # print("R turn left: " + str(degreesToTurn))
@@ -99,17 +138,18 @@ def matrixGoRight():
     elif currOrientation >= 270:
         degreesToTurn = currOrientation - 270
         changeOrRight(degreesToTurn)
-        stri = "turn right: "+str(degreesToTurn)
+        stri = "turn right: " + str(degreesToTurn)
         sendTurnData(stri)
         # ser.write(b'turn right: ' + str(degreesToTurn).encode("utf-8") + b'\n')
         # print("R turn right: " + str(degreesToTurn))
     # turn degrees to right
 
+
 def matrixGoLeft():
     if currOrientation < 90:
         degreesToTurn = 90 - currOrientation
         changeOrLeft(degreesToTurn)
-        stri = "turn right: "+str(degreesToTurn)
+        stri = "turn right: " + str(degreesToTurn)
         sendTurnData(stri)
         # ser.write(b'turn right: ' + str(degreesToTurn).encode("utf-8") + b'\n')
         # print("L turn right: " + str(degreesToTurn))
@@ -117,39 +157,43 @@ def matrixGoLeft():
     elif currOrientation >= 90:
         degreesToTurn = currOrientation - 90
         changeOrLeft(degreesToTurn)
-        stri = "turn left: "+str(degreesToTurn)
+        stri = "turn left: " + str(degreesToTurn)
         sendTurnData(stri)
         # ser.write(b'turn left: ' + str(degreesToTurn).encode("utf-8") + b'\n')
         # print("L turn left: " + str(degreesToTurn))
+
+
 # turn degrees to left
 
 def matrixGoForward():
     if currOrientation > 45 and currOrientation < 315:
         degreesToTurn = 360 - currOrientation
         changeOrLeft(degreesToTurn)
-        stri = "turn left: "+str(degreesToTurn)
+        stri = "turn left: " + str(degreesToTurn)
         sendTurnData(stri)
         # ser.write(b'turn left: ' + str(degreesToTurn).encode("utf-8") + b'\n')
     else:
         changeOrLeft(0)
-        stri = "turn left: "+str(0)
+        stri = "turn left: " + str(0)
         sendTurnData(stri)
         # ser.write(b'turn left: ' + b'0' + b'\n')
         # print("turn hella left: " + str(degreesToTurn))
+
+
 # turn degrees to left
 
 def matrixGoBack():
     if currOrientation < 180:
         degreesToTurn = 180 - currOrientation
         changeOrLeft(degreesToTurn)
-        stri = "turn left: "+str(degreesToTurn)
+        stri = "turn left: " + str(degreesToTurn)
         sendTurnData(stri)
         # print("B turn left: " + str(degreesToTurn))
         # turn degrees to left
     elif currOrientation >= 180:
         degreesToTurn = currOrientation - 180
         changeOrLeft(degreesToTurn)
-        stri = "turn right: "+str(degreesToTurn)
+        stri = "turn right: " + str(degreesToTurn)
         sendTurnData(stri)
         # print("B turn right: " + str(degreesToTurn))
         # turn degrees to right
@@ -183,11 +227,13 @@ def makeMatrix():
 def sendTurnData(strr):
     turnArray.append(strr)
 
+
 def nextDirections():
-    if(len(turnArray) > 0):
+    if (len(turnArray) > 0):
         # print(turnArray[0])
-        conn.send((turnArray[0]+"\r").encode())
+        # blu_send.send((turnArray[0]+"\r").encode())
         turnArray.pop(0)
+
 
 makeMatrix()
 
@@ -336,12 +382,14 @@ def turnRight():
     # ser.write(b'r\n')
     print("do R")
 
+
 ###
 # Signaal naar Robomow sturen om naar rechts te draaien.
 ###
 def turnLeft():
     # ser.write(b'l\n')
     print("do L")
+
 
 ###
 # Signaal naar Robomow sturen om de omtrek te beginnen bereken.
@@ -351,6 +399,8 @@ def calcCirc():
     #     while countCalc < 3:
     # ser.write(b't\n')
     countCalc += 1
+
+
 #     print(countCalc)
 
 ###
@@ -384,11 +434,13 @@ def makeMatrixEven(ar1, ar2):
             ar1.append("*")
     weight = len(ar1)
 
+
 def makeBigm():
     global bigMatrix
     s = (1000, 1000)
     bigMatrix = np.zeros(s, dtype=int)
     bigMatrix[1:10, 0] = 1
+
 
 ###
 # Beeldherkenning gedeelte.
@@ -422,7 +474,6 @@ def imageRec():
         #         print(arrayBasis)
         #         print(arrayHoogte)
         #                 cap.release()
-
 
         # conn.listen()
         # (clientsocket, address) = conn.accept()
@@ -518,68 +569,36 @@ def imageRec():
         #                     elif turnDis < 225:
         #                         if ndis > 25:
         #                             # ser.write(b'2')
-                                    print("TODO")
-                #                 elif ndis <= 25:
-                #                     # ser.write(b'6')
-                #                     print("TODO")
-                #
-                #
-                # elif len(approx) == 4:
-                #     cv2.putText(result_blue, "Rectangle", (x, y), 3, 1, (255, 255, 255))
-        #                 xt,yt,wt,ht = cv2.boundingRect(cnt)
-        #                 print(str(wt))
-        #                 cv2.putText(result_blue, str(wt), (x,y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (36,255,12), 2)
-        #                 cv2.rectangle(result_blue, (xt, yt), (xt + wt, yt + ht), (36,255,12), 1)
-        #                 calcFocalLength()
-
-        #                 cv2.putText(result_blue, str(wt), (xt,yt), 3, 1, (255, 255, 255))
-        #                 if(countCalc == 0):
-        #                     calcCirc(countCalc)
-        #                     countCalc =+1
-        #                 #centerShape = getCenterContour(result_blue)
-        #             elif 10 < len(approx) < 20:
-        #                 cv2.putText(result_blue, "Circle", (x, y), 3, 1, (255, 255, 255))
-
-        # Show results
-        # cv2.imshow("Frame", frame)
-        # # cv2.imshow("Blue", result_blue)
-        #
-        # key = cv2.waitKey(1)
-        # if key == 27:
-        #     break
-
-def readFromEsp():
-    global nextN, conn2
-    # while len(turnArray) > 0:
-        # Read ESP8266 data
-    # (clientsocket, address) = conn.accept()
-    # conn2 = clientsocket
-    nextDirections()
-    time.sleep(5)
-    # nnn = urllib.request.urlopen(url).read()
-    nnn = httplib.HTTPConnection(ip, port)
-
-    nnn.add_header('Connection',"keep-alive")
-
-    nnn = nnn.decode("utf-8")
-    print(nnn)
-    newN = nnn[79:len(nnn)-7]
-    if newN != nextN:
-        nextN = newN
-    # print(nextN)
-    readFromEsp()
-
-    # buffer = ""
+        print("TODO")
+    #                 elif ndis <= 25:
+    #                     # ser.write(b'6')
+    #                     print("TODO")
     #
-    # while 1:
-    #     data = clientsocket.recv(128)
-    #     datastr = buffer + data.decode('utf-8')
-    #     print(datastr)
-    #     split = datastr.split("\n")
-    #     buffer = split[-1]
-    #     print(split[:-1])
+    #
+    # elif len(approx) == 4:
+    #     cv2.putText(result_blue, "Rectangle", (x, y), 3, 1, (255, 255, 255))
+    #                 xt,yt,wt,ht = cv2.boundingRect(cnt)
+    #                 print(str(wt))
+    #                 cv2.putText(result_blue, str(wt), (x,y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (36,255,12), 2)
+    #                 cv2.rectangle(result_blue, (xt, yt), (xt + wt, yt + ht), (36,255,12), 1)
+    #                 calcFocalLength()
 
-readFromEsp()
+    #                 cv2.putText(result_blue, str(wt), (xt,yt), 3, 1, (255, 255, 255))
+    #                 if(countCalc == 0):
+    #                     calcCirc(countCalc)
+    #                     countCalc =+1
+    #                 #centerShape = getCenterContour(result_blue)
+    #             elif 10 < len(approx) < 20:
+    #                 cv2.putText(result_blue, "Circle", (x, y), 3, 1, (255, 255, 255))
+
+    # Show results
+    # cv2.imshow("Frame", frame)
+    # # cv2.imshow("Blue", result_blue)
+    #
+    # key = cv2.waitKey(1)
+    # if key == 27:
+    #     break
+
 # while True:
 #     # Read arduino reply
 #     if ser.in_waiting > 0:
