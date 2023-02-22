@@ -87,7 +87,7 @@ int wheelpingsBlock2 = 0;
 
 void setup() {
   
-  Serial.begin(115200); //9600
+  Serial.begin(9600); //9600
   Serial.setTimeout(1000);
   
   // pinMode(rxPin, INPUT);
@@ -119,7 +119,7 @@ void setup() {
 
   delay(1000);
 //  startCalcCirc();
-//  goForward(goSpeed, goSpeed2);
+ goForward(goSpeed, goSpeed2);
 //  startCuttingGrass();
 }
 
@@ -178,9 +178,9 @@ void loop() {
   
 
   if(Serial.available() > 0) { // Checks whether data is comming form the serial port
-//    int datae = Serial.read();
+    // data = Serial.read();
    data = Serial.readStringUntil('\n');
-  //  Serial.println("Notreceived: " + String(data));
+   Serial.println("Notreceived: " + String(data));
 //   Serial.println(String(data).indexOf("left"));
     if(data.indexOf("l") == 5){
       if(data.length() == 14){ //3 char angle
@@ -242,7 +242,7 @@ void loop() {
         foundDock = 1;
         // stopRotateDegree();
         degreeToTurn = 100;
-        rotatdeDegreeRight(128, 128);
+        rotateDegreeRight(128, 128);
       }
     }
     else if(data == "l"){ // Dock gevonden, maar ligt links
@@ -392,7 +392,7 @@ void readPerimeters(){
   periDataFront = analogRead(periPinFront);
   //  Serial.println("SensorDataFront: " + String(periDataFront));
   periDataLeft = analogRead(periPinRight); //groen gijs
-  // Serial.println("SensorDataRight: " + String(periDataRight));
+  Serial.println("SensorDataLeft: " + String(periDataLeft));
   interrupts();
   if(periDataLeft > 400 && periDataFront > 400){ // links en voor vast
      if(wheelPings1 > 1 and setPingsDone == 0){
@@ -400,14 +400,21 @@ void readPerimeters(){
       pingsWhenStraight2 = wheelPings2;
       setPingsDone = 1;
     }
-    rotateDegreeRight(goSpeed, goSpeed2);
+    if(running == 1){
+      degreeToTurn = degreeToTurn90;
+      rotateDegreeRight(goSpeed, goSpeed2);
+    }
   }
   if(periDataLeft > 400 && periDataFront < 400){ // enkel links vast
-    goForward(goSpeed, goSpeed2);
+    if(running == 1){
+      goForward(goSpeed, goSpeed2);
+    }
   }
   if(periDataLeft < 400){ // links niet meer vast
-    degreeToTurn = degreeToTurn90;
-    rotateDegreeLeft(goSpeed, goSpeed2);
+    if(running == 1){
+      degreeToTurn = degreeToTurn90;
+      rotateDegreeLeft(goSpeed, goSpeed2);
+    }
   }
 
 }
