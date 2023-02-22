@@ -120,6 +120,7 @@ void setup() {
   delay(1000);
 //  startCalcCirc();
  goForward(goSpeed, goSpeed2);
+ calculatingCirc = 1;
 //  startCuttingGrass();
 }
 
@@ -394,7 +395,7 @@ void readPerimeters(){
   periDataLeft = analogRead(periPinRight); //groen gijs
   Serial.println("SensorDataLeft: " + String(periDataLeft));
   interrupts();
-  if(periDataLeft > 400 && periDataFront > 400){ // links en voor vast
+  if(periDataLeft > 100 && periDataFront > 400){ // links en voor vast
      if(wheelPings1 > 1 and setPingsDone == 0){
       pingsWhenStraight1 = wheelPings1;
       pingsWhenStraight2 = wheelPings2;
@@ -405,12 +406,12 @@ void readPerimeters(){
       rotateDegreeRight(goSpeed, goSpeed2);
     }
   }
-  if(periDataLeft > 400 && periDataFront < 400){ // enkel links vast
+  if(periDataLeft > 100 && periDataFront < 400){ // enkel links vast
     if(running == 1){
       goForward(goSpeed, goSpeed2);
     }
   }
-  if(periDataLeft < 400){ // links niet meer vast
+  if(periDataLeft < 100){ // links niet meer vast
     if(running == 1){
       degreeToTurn = degreeToTurn90;
       rotateDegreeLeft(goSpeed, goSpeed2);
