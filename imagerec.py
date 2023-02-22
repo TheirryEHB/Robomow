@@ -64,19 +64,19 @@ def signal_handler(signal, frame):
 
 COM = "COM11"
 BAUD = 9600
-SerialPort = serial.Serial(COM, BAUD, timeout=1)
+SerialPort = serial.Serial(COM, BAUD, timeout=5)
 SerialPort.close()
 SerialPort.open()
-time.sleep(5)
+time.sleep(10)
 
 while 1:
-    try:
+    # try:
         # OutgoingData = input('> ')
-        SerialPort.write(str("2\n").encode("utf-8"))
-    except KeyboardInterrupt:
-        print("Closing and exiting the program")
-        SerialPort.close()
-        sys.exit(0)
+        # SerialPort.write(str("2\n").encode("utf-8"))
+    # except KeyboardInterrupt:
+    #     print("Closing and exiting the program")
+    #     SerialPort.close()
+    #     sys.exit(0)
     IncomingData = SerialPort.readline()
     if IncomingData:
         print(IncomingData.decode('utf-8'))
