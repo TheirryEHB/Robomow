@@ -55,7 +55,7 @@ int degreeToTurn90 = 900;
 int degreeToTurn1 = degreeToTurn90 / 90;
 int stopedTurning = 0; 
 int count = 0;
-int leftPeriSensitivity = 100
+int leftPeriSensitivity = 100;
 
 //Battery
 const int analogInPin = A2; // Pin lezen batterij
@@ -162,6 +162,7 @@ void loop() {
     if(turning == 1){ 
       stopRotateDegree();
       if(calculatingCirc == 1 && turning == 0){ //--> TODO
+        leftPeriSensitivity = 100;
         goForward(goSpeed, goSpeed2);
       }
       //      if(cutting == 1 && doneCutting == 0){
@@ -394,25 +395,25 @@ void readPerimeters(){
   periDataLeft = analogRead(periPinRight); //groen gijs
   // Serial.println("SensorDataLeft: " + String(periDataLeft));
   interrupts();
-  if(periDataLeft > leftPeriSensitivity ){ // links en voor vast
+  if(periDataLeft > 100){ // links vast
     //  if(wheelPings1 > 1 and setPingsDone == 0){
     //   pingsWhenStraight1 = wheelPings1;
     //   pingsWhenStraight2 = wheelPings2;
     //   setPingsDone = 1;
     // }
     if(running == 1){
-      if(periDataFront > 400){
+      if(periDataFront > 400){ // Ook van voor vast
         degreeToTurn = degreeToTurn90;
-        leftPeriSensitivity = 200;
+        leftPeriSensitivity = 30;
         rotateDegreeRight(goSpeed, goSpeed2);
       }
-      else if(periDataFront < 400){
+      else if(periDataFront < 400){ // van voor NIET vast
         goForward(goSpeed, goSpeed2);
       }
       
     }
   }
-  else if(periDataLeft < leftPeriSensitivity){ // links niet meer vast
+  else if(periDataLeft < leftPeriSensitivity){ // links NIET MEER vast
     if(running == 1){
       degreeToTurn = degreeToTurn90;
       rotateDegreeLeft(goSpeed, goSpeed2);
