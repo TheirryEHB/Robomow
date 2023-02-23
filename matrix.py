@@ -18,9 +18,12 @@ hostMac = '98:d3:31:f6:77:ff'
 port = 11
 passkey = "1234"
 
-COM = "COM11"
+COM = "COM5"
+#voor laptop outgoing: COM10(spp dev), incomming COM9
+#laptop usb COM5
+#Voor desktop outgoing: COM11(spp dev), incomming COM10
 BAUD = 9600
-SerialPort = serial.Serial(COM, BAUD, timeout=5)
+SerialPort = serial.Serial(COM, BAUD, timeout=0.001)
 time.sleep(5)
 
 def sendData(toSend):
@@ -31,12 +34,26 @@ def sendData(toSend):
 
 def readData():
     while 1:
-        SerialPort.close()
-        SerialPort.open()
+        # SerialPort.close()
+        # SerialPort.open()
         IncomingData = SerialPort.readline()
         if IncomingData:
             print(IncomingData.decode('utf-8'))
 
 
-sendData(str(2))
-readData()
+# sendData(str(2))
+# time.sleep(5)
+# readData()
+
+while (1):
+    try:
+        OutgoingData=input('> ')
+        SerialPort.write(bytes(OutgoingData,'utf-8'))
+    except KeyboardInterrupt:
+        print("Closing and exiting the program")
+        SerialPort.close()
+        sys.exit(0)
+    IncomingData=SerialPort.readline()
+    if(IncomingData):
+        print((IncomingData).decode('utf-8'))
+    time.sleep(0.01)
