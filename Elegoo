@@ -42,6 +42,7 @@ const int N = 3410; //Gemiddelde pings per rotatie
 const float pi = 3.14;
 const int lengthRobo = 55;
 
+
 // PeriSensor
 int periDataFront = 0; // Data voor perimeter sensor aan de voorkant
 int periDataLeft = 0; // Data voor perimeter sensor aan de rechterkant
@@ -54,6 +55,7 @@ int degreeToTurn90 = 900;
 int degreeToTurn1 = degreeToTurn90 / 90;
 int stopedTurning = 0; 
 int count = 0;
+int leftPeriSensitivity = 100
 
 //Battery
 const int analogInPin = A2; // Pin lezen batterij
@@ -137,9 +139,6 @@ void loop() {
       wheelpingsBlock1 = 0;
       wheelpingsBlock2 = 0;
     }
-//    if(wheelPings1 ==3410){
-//      Stop();
-//    }
 
     if(searchingForDock == 1 && foundDock == 1){ //Dock gevonden
       Serial.println("Stop");
@@ -381,7 +380,6 @@ void driveStraight(int dist, int power){
   Stop();  
 }
 
-
 /* 
   Get data from perimeter pins and put them in periDataFront and periDataRight
   https://www.arduino.cc/reference/en/language/functions/analog-io/analogread/
@@ -396,7 +394,7 @@ void readPerimeters(){
   periDataLeft = analogRead(periPinRight); //groen gijs
   // Serial.println("SensorDataLeft: " + String(periDataLeft));
   interrupts();
-  if(periDataLeft > 100 ){ // links en voor vast
+  if(periDataLeft > leftPeriSensitivity ){ // links en voor vast
     //  if(wheelPings1 > 1 and setPingsDone == 0){
     //   pingsWhenStraight1 = wheelPings1;
     //   pingsWhenStraight2 = wheelPings2;
@@ -405,15 +403,16 @@ void readPerimeters(){
     if(running == 1){
       if(periDataFront > 400){
         degreeToTurn = degreeToTurn90;
+        leftPeriSensitivity = 200;
         rotateDegreeRight(goSpeed, goSpeed2);
       }
-      else if(periDataFront < 400 && turningRight == 0){
+      else if(periDataFront < 400){
         goForward(goSpeed, goSpeed2);
       }
       
     }
   }
-  else if(periDataLeft < 100 && turningRight == 0){ // links niet meer vast
+  else if(periDataLeft < leftPeriSensitivity){ // links niet meer vast
     if(running == 1){
       degreeToTurn = degreeToTurn90;
       rotateDegreeLeft(goSpeed, goSpeed2);
@@ -515,8 +514,6 @@ int speedVerify(int speed) {
   }
   return speed;
 }
-
-
 
 void goForward(int motorSpeed1, int motorSpeed2){
   running = 1;
@@ -627,7 +624,7 @@ void stopRotateDegree(){
 }
 
 /**
-  Rechts draaien in een bepaalde hoek.
+  Links draaien in een bepaalde hoek.
 **/
 void rotateDegreeLeft(int motorSpeed1, int motorSpeed2){
 
@@ -649,7 +646,7 @@ void rotateDegreeLeft(int motorSpeed1, int motorSpeed2){
 }
 
 /**
-  Links draaien in een bepaalde hoek.
+  Rechts draaien in een bepaalde hoek.
 **/
 void rotateDegreeRight(int motorSpeed1, int motorSpeed2){
   setValuesToZero();
@@ -677,8 +674,8 @@ void Stop(){
   analogWrite(enA, 0);
   analogWrite(enB, 0);
 
-//  Serial.println("wheelpings1: " + String(wheelPingsWhenStopped1));
-//  Serial.println("wheelpings2: " + String(wheelPingsWhenStopped2));
+  //  Serial.println("wheelpings1: " + String(wheelPingsWhenStopped1));
+  //  Serial.println("wheelpings2: " + String(wheelPingsWhenStopped2));
   setValuesToZero();
   
 }
