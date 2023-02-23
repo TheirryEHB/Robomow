@@ -3,7 +3,7 @@
 
 int oldSpeed = 0;
 int goSpeed= 128; // Snelheid motor 1 ,links
-int goSpeed2 = 255; // Snelheid motor 2 --> rechts krijgt vaak te wijnig kracht
+int goSpeed2 = 255; // Snelheid motor 2 --> rechts krijgt vaak te weinig kracht
 const int motor_offset = 5;
 
 /* Motor A connections*/
@@ -16,7 +16,11 @@ int in3 = 6;
 int in4 = 7;
 int relaisPin = 8; //Pin naar relay voor grasmaaier bladen
 int relaisStatus = 0; //Status relay
-int running = 0;
+// int running = 0;
+enum runningStates{
+  running
+};
+enum runningStates runningState;
 
 /*Bluetooth module*/
 String data = ""; //Data van bluetooth module
@@ -42,18 +46,25 @@ const int N = 3410; //Gemiddelde pings per rotatie
 const float pi = 3.14;
 const int lengthRobo = 55;
 
-
 // PeriSensor
 int periDataFront = 0; // Data voor perimeter sensor aan de voorkant
 int periDataLeft = 0; // Data voor perimeter sensor aan de rechterkant
 int periPinFront = A0; // Pin voor perimeter sensor aan de voorkant
 int periPinRight = A1; // Pin voor perimeter sensor aan de rechterkant
-int turning = 0;
-int turningRight = 0;
+enum turningStates{
+  turning,
+  notTurning,
+  stopedTurning,
+  turningRight,
+  notTurningRight
+};
+enum turningStates turnState = notTurning;
+// int turning = 0;
+// int turningRight = 0;
 int degreeToTurn = 0;
 int degreeToTurn90 = 900;
 int degreeToTurn1 = degreeToTurn90 / 90;
-int stopedTurning = 0; 
+// int stopedTurning = 0; 
 int count = 0;
 int leftPeriSensitivity = 100;
 
@@ -65,21 +76,41 @@ const int analogInPin = A2; // Pin lezen batterij
 int circumflex = 0; //De berekende opp
 int pingsWhenStraight1 = 0; //Aantal pings voor eerste keer draaien
 int pingsWhenStraight2 = 0; //Aantal pings voor tweede keer draaien
-int calculatingCirc = 0; // Is Robomow opp aan het berekenen?
-int doneCalculatingCirc = 0; // Is Robomow klaar met opp berekenen?
+enum calculatingStates{
+  calculatingField,
+  doneCalculatingField
+};
+enum calculatingStates calcState = doneCalculatingField;
+// int calculatingCirc = 0; // Is Robomow opp aan het berekenen?
+// int doneCalculatingCirc = 0; // Is Robomow klaar met opp berekenen?
 int dis1 = 0; //Afstand afgelegd voor eerste keer draaien
 int dis2 = 0; //Afstand afgelegd voor tweede keer draaien
 int first = 0; // Hoeveelste afstand in een rechte lijn is Robomow aan het berekenen
 int setPingsDone = 0;
 
 // RasberryPi
-int searchingForDock = 0; // Is Robomow aan het zoeken voor de dock?
-int foundDock = 0; // Heeft Robomow de dock gevonden?
-int allignedToDock = 0; // Staat Robomow recht tegenover de dock?
+enum searchingDockStates{
+  searchingForDock,
+  notSearchingForDock
+};
+enum searchingDockStates searchingDockState = notSearchingForDock;
+enum foundDockStates{
+  foundDock,
+  allignedToDock
+};
+enum foundDockStates foundDockState = foundDock;
+// int searchingForDock = 0; // Is Robomow aan het zoeken voor de dock?
+// int foundDock = 0; // Heeft Robomow de dock gevonden?
+// int allignedToDock = 0; // Staat Robomow recht tegenover de dock?
 
 //Cutting grass
-int cutting = 0; // Is Robomow cutting the grass?
-int doneCutting = 0; // Is Robomow done cutting the grass?
+enum cuttingStates{
+  cutting,
+  doneCutting
+};
+enum cuttingStates cuttState = doneCutting;
+// int cutting = 0; // Is Robomow cutting the grass?
+// int doneCutting = 0; // Is Robomow done cutting the grass?
 int maxUpDown = 0; // How many times Robomow should go up and down
 int whentUpDown = 0; // How many times Robomow has gone up and down
 
@@ -122,8 +153,8 @@ void setup() {
 
   delay(1000);
 //  startCalcCirc();
- goForward(goSpeed, goSpeed2);
- calculatingCirc = 1;
+//  goForward(goSpeed, goSpeed2);
+  calcState = calculatingField;
 //  startCuttingGrass();
 }
 
@@ -132,7 +163,7 @@ void loop() {
   float batteryVoltage = getBatteryStatus();
   readPerimeters();
 
-  if(running == 1){ //Encoder mag enkel worden afgelezen als Robomow aan het rijden is
+  if(runningState == running){ //Encoder mag enkel worden afgelezen als Robomow aan het rijden is
     readEncoder();
     if(wheelpingsBlock1 >= (N/2) - 4 || wheelpingsBlock1 <= (N/2) + 4){
       // send data to python
@@ -140,28 +171,28 @@ void loop() {
       wheelpingsBlock2 = 0;
     }
 
-    if(searchingForDock == 1 && foundDock == 1){ //Dock gevonden
+    if(searchingDockState == searchingForDock && foundDockState == foundDock){ //Dock gevonden
       Serial.println("Stop");
       Stop();
     }
-    if(doneCalculatingCirc == 1 && calculatingCirc == 0){ // Klaar berekenen opp
-      circumflex = dis1 * dis2;
-      doneCalculatingCirc = 0;
+    if(calcState == doneCalculatingField){ // Klaar berekenen opp
+      // circumflex = dis1 * dis2;
+      // doneCalculatingCirc = 0;
       
       Stop();
-      if(cutting == 1){
+      if(cuttState == cutting){
         maxUpDown = circumflex / dis1;
         Serial.println("circ: " + String(circumflex));
         Serial.println("maxUpD: " + String(maxUpDown));
         startCuttingGrass();
       }
     }
-    if(doneCutting == 1 && cutting == 0){
+    if(cuttState == doneCutting){
       Stop();
     }
-    if(turning == 1){ 
+    if(turnState == turning){ 
       stopRotateDegree();
-      if(calculatingCirc == 1 && turning == 0){ //--> TODO
+      if(calcState == calculatingField && turnState == turning){ //--> TODO
         leftPeriSensitivity = 100;
         goForward(goSpeed, goSpeed2);
       }
@@ -173,7 +204,7 @@ void loop() {
   }
   
 
-  if(searchingForDock == 1 && foundDock == 0){ //Dock zoeken
+  if(searchingDockState == searchingForDock && foundDockState == foundDock){ //Dock zoeken
     // Serial.println("rotating");
       // rotateLeft(150, 150);
   }
@@ -239,9 +270,9 @@ void loop() {
       startCalcCirc();
     }
     else if(data == "r"){ // Dock gevonden, maar ligt rechts
-      if(calculatingCirc == 0){
-      //        Serial.println("FoundDock");
-        foundDock = 1;
+      if(calcState != calculatingField){
+        //Serial.println("FoundDock");
+        foundDockState = foundDock;
         // stopRotateDegree();
         degreeToTurn = 100;
         rotateDegreeRight(128, 128);
@@ -249,17 +280,17 @@ void loop() {
     }
     else if(data == "l"){ // Dock gevonden, maar ligt links
       Serial.println("received: " + String(data)); 
-      if(calculatingCirc == 0){
+      if(calcState != calculatingField){
       //        Serial.println("FoundDock");
-        foundDock = 1;
+        foundDockState = foundDock;
         // stopRotateDegree();
         degreeToTurn = 100;
         rotateDegreeLeft(128, 128);
       }
     }
     else if(data == "s"){ // Begin zoeken dock
-      searchingForDock = 1;
-      foundDock = 0;
+      searchingDockState = searchingForDock;
+      foundDockState = foundDock;
       rotateLeft(goSpeed, goSpeed2);
     }
     else if(data == "c"){
@@ -271,7 +302,7 @@ void loop() {
 
 void startCalcCirc(){
   first = 0;
-  calculatingCirc = 1;
+  calcState = calculatingField;
   degreeToTurn = degreeToTurn90;
   Serial.println("startin");
   goForward(goSpeed, goSpeed2);
@@ -279,13 +310,13 @@ void startCalcCirc(){
 
 void startCuttingGrass(){
   Serial.println("cuttin: " + String(cutting));
-  if(cutting == 0){
-    cutting = 1;
+  if(cuttState != cutting){
+    cuttState = cutting;
     startCalcCirc();
     Serial.println("cuttin: " + String(cutting));
   }
   
-  else if(cutting == 1){
+  else if(cuttState == cutting){
     Serial.println("wentup: " + String(whentUpDown));
     if(whentUpDown < maxUpDown){
       degreeToTurn = degreeToTurn90 * 2;
@@ -293,8 +324,7 @@ void startCuttingGrass(){
       goForward(goSpeed, goSpeed2);
     }
     else if(whentUpDown == maxUpDown){
-      cutting = 0;
-      doneCutting = 1;
+      cuttState = doneCutting;
     }
     
   }
@@ -307,7 +337,7 @@ void startCuttingGrass(){
 **/
 void driveStraight(int dist, int power){
 
-  running = 1;
+  runningState = running;
   setValuesToZero();
 
   unsigned long num_ticks_l;
@@ -401,7 +431,7 @@ void readPerimeters(){
     //   pingsWhenStraight2 = wheelPings2;
     //   setPingsDone = 1;
     // }
-    if(running == 1){
+    if(runningState == running){
       if(periDataFront > 400){ // Ook van voor vast
         degreeToTurn = degreeToTurn90;
         leftPeriSensitivity = 30;
@@ -414,7 +444,7 @@ void readPerimeters(){
     }
   }
   else if(periDataLeft < leftPeriSensitivity){ // links NIET MEER vast
-    if(running == 1){
+    if(runningState == running){
       degreeToTurn = degreeToTurn90;
       rotateDegreeLeft(goSpeed, goSpeed2);
     }
@@ -517,7 +547,7 @@ int speedVerify(int speed) {
 }
 
 void goForward(int motorSpeed1, int motorSpeed2){
-  running = 1;
+  runningState = running;
   digitalWrite(in1, HIGH);
   digitalWrite(in2, LOW);
   digitalWrite(in3, LOW);
@@ -555,7 +585,7 @@ void goRight(int motorSpeed1, int motorSpeed2){
 }
 
 void rotateRight(int motorSpeed1, int motorSpeed2){
-  running = 1;
+  runningState = running;
   digitalWrite(in1, HIGH);
   digitalWrite(in2, LOW);
   digitalWrite(in3, HIGH);
@@ -579,7 +609,7 @@ void goLeft(int motorSpeed1, int motorSpeed2){
   
 }
 void rotateLeft(int motorSpeed1, int motorSpeed2){
-  running = 1;
+  runningState = running;
   digitalWrite(in1, LOW);
   digitalWrite(in2, HIGH);
   digitalWrite(in3, LOW);
@@ -607,9 +637,8 @@ void degreeToPings(int deg){
 **/
 void stopRotateDegree(){
   if(wheelPingsWhenStopped2 == degreeToTurn){ 
-    stopedTurning = 1;
-    turningRight = 0;
-    if(calculatingCirc == 1){ //Berekenen opp
+    turnState = stopedTurning;
+    if(calcState = calculatingField){ //Berekenen opp
       //      Serial.println("wheelpingsStraigth1: " + String(pingsWhenStraight1));
       //      Serial.println("wheelpingsStraigth2: " + String(pingsWhenStraight2));
     }
@@ -630,9 +659,9 @@ void stopRotateDegree(){
 void rotateDegreeLeft(int motorSpeed1, int motorSpeed2){
 
   setValuesToZero();
-  turning = 1;
-  running = 1;
-  stopedTurning = 0;
+  turnState = turning;
+  runningState = running;
+  // turnState stopedTurning = 0;
 
   digitalWrite(in1, LOW);
   digitalWrite(in2, HIGH);
@@ -651,10 +680,9 @@ void rotateDegreeLeft(int motorSpeed1, int motorSpeed2){
 **/
 void rotateDegreeRight(int motorSpeed1, int motorSpeed2){
   setValuesToZero();
-  turning = 1;
-  turningRight = 1;
-  running = 1;
-  stopedTurning = 0;
+  turnState = turning;
+  runningState = running;
+  // stopedTurning = 0;
 
   digitalWrite(in1, HIGH);
   digitalWrite(in2, LOW);
@@ -691,8 +719,8 @@ void setValuesToZero(){
   wheelPings2 = 0;
   wheelPingsWhenStopped1 = 0;
   wheelPingsWhenStopped2 = 0;
-  running = 0;
-  turning = 0;
+  runningState = running;
+  turnState = stopedTurning;
   // stopedTurning = 0;
 }
 
