@@ -132,7 +132,6 @@ void setup() {
 //  goForward(goSpeed, goSpeed2);
   frontFreeState = frontFree;
   calculatingCirc = 1;
-  Serial.print("here");
 //  startCuttingGrass();
 }
 
@@ -158,6 +157,7 @@ void loop() {
       frontFreeState = frontFree;
       leftPeriSensitivity = 100;
       int totaldeg = pingsToDegree(totalDegTurned);
+      totalDegTurned = 0;
       Serial.println("deg: " + String(totaldeg));
     }
     if(doneCalculatingCirc == 1 && calculatingCirc == 0){ // Klaar berekenen opp
@@ -225,7 +225,6 @@ void loop() {
     }
 
     if(data == "1"){
-      Serial.println("sent 1");
       rotateLeft(goSpeed, goSpeed2);
     }
     else if(data == "2"){
@@ -635,7 +634,7 @@ void stopRotateDegree(){
       //      Serial.println("wheelpingsStraigth1: " + String(pingsWhenStraight1));
       //      Serial.println("wheelpingsStraigth2: " + String(pingsWhenStraight2));
       if(turningRight == 1){
-        totalDegTurned = totalDegTurned - wheelPingsWhenStopped2;
+        totalDegTurned = totalDegTurned + wheelPingsWhenStopped2;
       }
       else if(turningRight == 0){
         totalDegTurned = totalDegTurned - wheelPingsWhenStopped2;
@@ -663,6 +662,7 @@ void rotateDegreeLeft(int motorSpeed1, int motorSpeed2){
   turning = 1;
   running = 1;
   stopedTurning = 0;
+  turningRight = 0;
 
   digitalWrite(in1, LOW);
   digitalWrite(in2, HIGH);
