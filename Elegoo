@@ -133,21 +133,18 @@ void setup() {
 
   delay(1000);
 
-  // frontFreeState = frontFree;
-  // frontNow = frontFreeState;
-  // calculatingField = 1;
-
-// degreeToTurn = 900;
-//           Serial.println("turnleft1");
-//           rotateDegreeRight(goSpeed, goSpeed2);
+  frontFreeState = frontFree;
+  frontNow = frontFreeState;
+  calculatingField = 1;
 }
 
 void loop() {
  
   float batteryVoltage = getBatteryStatus();
-  // readPerimeters();
+  readPerimeters();
+  
   if(frontFreeState != frontNow){
-    Serial.println("Frontfree is: " + String(frontFreeState));
+    // Serial.println("Frontfree is: " + String(frontFreeState));
     frontNow = frontFreeState;
   }
 
@@ -170,12 +167,14 @@ void loop() {
       int totaldeg = pingsToDegree(totalDegTurned);
       calculatingField = 0;
       // Stop();
-      Serial.println("deg: " + String(totalDegTurned));
-      totalDegTurned = 0;
+      if(totalDegTurned != 0){
+        Serial.println("deg: " + String(totalDegTurned));
+        totalDegTurned = 0;
+      }
+     
       goForward(goSpeed, goSpeed2);
     }
     if(doneCalculatingField == 1 && calculatingField == 0){ // Klaar berekenen opp
-      // circumflex = dis1 * dis2;
       doneCalculatingField = 0;
       
       Stop();
@@ -460,12 +459,12 @@ void readPerimeters(){
       else if(periDataLeft < leftPeriSensitivity){ // links NIET MEER vast --> naar links
         if(frontFreeState == frontNotFree){
           degreeToTurn = 5;
-          Serial.println("turnleft1");
+          // Serial.println("turnleft1");
           rotateDegreeLeft(goSpeed, goSpeed2);
         }
         else if(frontFreeState == frontFree){
           degreeToTurn = degreeToTurn90;
-          Serial.println("turnleft2: " + String(degreeToTurn));
+          // Serial.println("turnleft2: " + String(degreeToTurn));
           rotateDegreeLeft(goSpeed, goSpeed2);
         }
       }
