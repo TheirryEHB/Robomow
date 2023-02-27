@@ -3,7 +3,7 @@
 
 int oldSpeed = 0;
 int goSpeed= 128; // Snelheid motor 1 ,links
-int goSpeed2 = 255; // Snelheid motor 2 --> rechts krijgt vaak te wijnig kracht
+int goSpeed2 = 200; // Snelheid motor 2 --> rechts krijgt vaak te wijnig kracht
 const int motor_offset = 5;
 
 /* Motor A connections*/
@@ -133,15 +133,17 @@ void setup() {
 
   delay(1000);
 
-  frontFreeState = frontFree;
-  frontNow = frontFreeState;
-  calculatingField = 1;
+  // frontFreeState = frontFree;
+  // frontNow = frontFreeState;
+  // calculatingField = 1;
+  goForward(goSpeed, goSpeed2);
 }
 
 void loop() {
  
   float batteryVoltage = getBatteryStatus();
-  readPerimeters();
+  // readPerimeters();
+  readEncoder();
   
   if(frontFreeState != frontNow){
     // Serial.println("Frontfree is: " + String(frontFreeState));
@@ -479,25 +481,25 @@ void readPerimeters(){
   Also increase wheelpings1 and 2 and wheelPingsWhenStopped1 and 2 if needed.
 
 */
-void readEncoder(){
+void readEncoder(){ //Enkel H1 werkt goed
 
   wheelData1 = digitalRead(wheelPin1);
   wheelData2 = digitalRead(wheelPin2);
    
-  if(wheelData1 == HIGH){
-    oldWheelData1 = wheelData1;
+  if(wheelData1 == LOW && oldWheelData1 == HIGH){
     wheelpingsBlock1 = oldWheelData1;
 
     ++wheelPingsWhenStopped1;
-    // Serial.println("wheeld: " + String(wheelData1) + " H1");
+    Serial.println("wheeld: " + String(wheelData1) + " H1");
   }
-  if(wheelData2 == HIGH){
-    oldWheelData2 = wheelData2;
+  if(wheelData2 == LOW && oldWheelData2 == HIGH){
     wheelpingsBlock2 = oldWheelData2;
   
     ++wheelPingsWhenStopped2;
-    // Serial.println("wheeld2: " + String(wheelData2) + " H2");
+    Serial.println("wheeld2: " + String(wheelPingsWhenStopped2) + " H2");
   }
+  oldWheelData1 = wheelData1;
+  oldWheelData2 = wheelData2;
 }
 
 /*
