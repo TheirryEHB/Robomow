@@ -3,7 +3,7 @@
 
 int oldSpeed = 0;
 int goSpeed= 128; // Snelheid motor 1 ,links
-int goSpeed2 = 200; // Snelheid motor 2 --> rechts krijgt vaak te wijnig kracht
+int goSpeed2 = 255; // Snelheid motor 2 --> rechts krijgt vaak te wijnig kracht
 const int motor_offset = 5;
 
 /* Motor A connections*/
@@ -36,7 +36,7 @@ int oldWheelData2 = 2;
 int distance1 = 0; // distance traveled by Robomow (for now: since activation)
 int distance2 = 0;
 const int R = 9; //Radius of wheel
-const int N = 3410; //Gemiddelde pings per rotatie
+const int N = 57; //Gemiddelde pings per rotatie, was 3077
 const float pi = 3.14;
 const int lengthRobo = 55;
 
@@ -48,9 +48,11 @@ int periPinFront = A0; // Pin voor perimeter sensor aan de voorkant
 int periPinRight = A1; // Pin voor perimeter sensor aan de rechterkant
 int turning = 0;
 int turningRight = 0;
+int turningLeft = 0;
 int degreeToTurn = 0;
-int degreeToTurn90 = 6077; //was 900 nu 6077
-int degreeToTurn1 = degreeToTurn90 / 90;
+int degreeToTurn90 = 16; //was 900 nu 16
+int degreeToTurn1 = degreeToTurn90 / 90; //--> 0.17777...8
+int degreePer1Ping = 90 / degreeToTurn90; //--> 5.625
 int stopedTurning = 0; 
 int count = 0;
 int leftPeriSensitivity = 100;
@@ -97,11 +99,12 @@ int whentUpDown = 0; // How many times Robomow has gone up and down
 int moveMatrix = 0;
 int wheelpingsBlock1 = 0; // When equal to 3410, one matrix section has been traveled
 int wheelpingsBlock2 = 0;
-int totalDegTurned = 0;
+int totalDegTurnedRight = 0;
+int totalDegTurnedLeft = 0;
 
 void setup() {
   
-  Serial.begin(9600); //9600
+  Serial.begin(115200); //9600
   Serial.setTimeout(1000);
   
   // pinMode(rxPin, INPUT);
@@ -133,25 +136,39 @@ void setup() {
 
   delay(1000);
 
-  // frontFreeState = frontFree;
-  // frontNow = frontFreeState;
-  // calculatingField = 1;
-  goForward(goSpeed, goSpeed2);
+  frontFreeState = frontFree;
+  frontNow = frontFreeState;
+  calculatingField = 1;
+  // goForward(goSpeed, goSpeed2);
+  // driveStraight(100, 255);
+  // degreeToTurn = degreeToTurn90;
+  // rotateDegreeLeft(goSpeed, goSpeed2);
 }
 
 void loop() {
  
   float batteryVoltage = getBatteryStatus();
-  // readPerimeters();
+  readPerimeters();
   readEncoder();
   
   if(frontFreeState != frontNow){
     // Serial.println("Frontfree is: " + String(frontFreeState));
     frontNow = frontFreeState;
+    if(frontFreeState == frontBackFree){
+      frontFreeState = frontFree;
+      leftPeriSensitivity = 100;
+      int totaldegRight = pingsToDegree(totalDegTurnedRight);
+      calculatingField = 0;
+      Serial.println("degP: " + String(totalDegTurnedRight));
+      // Stop();
+      if(totalDegTurnedRight != 0){
+        Serial.println("deg: " + String(totaldegRight));
+        totalDegTurnedRight = 0;
+      }
+     
+      goForward(goSpeed, goSpeed2);
+    }
   }
-
-  if(running == 1){ //Encoder mag enkel worden afgelezen als Robomow aan het rijden is
-    readEncoder();
     // if(wheelpingsBlock1 >= (N/4) - 4 || wheelpingsBlock1 <= (N/4) + 4){
     //   // send data to python
     //   // Serial.write("Wheel")
@@ -163,33 +180,8 @@ void loop() {
       Serial.println("Stop");
       Stop();
     }
-    if(frontFreeState == frontBackFree){
-      frontFreeState = frontFree;
-      leftPeriSensitivity = 100;
-      int totaldeg = pingsToDegree(totalDegTurned);
-      calculatingField = 0;
-      // Stop();
-      if(totalDegTurned != 0){
-        Serial.println("deg: " + String(totalDegTurned));
-        totalDegTurned = 0;
-      }
-     
-      goForward(goSpeed, goSpeed2);
-    }
-    if(doneCalculatingField == 1 && calculatingField == 0){ // Klaar berekenen opp
-      doneCalculatingField = 0;
-      
-      Stop();
-      if(cutting == 1){
-        maxUpDown = circumflex / dis1;
-        Serial.println("circ: " + String(circumflex));
-        Serial.println("maxUpD: " + String(maxUpDown));
-        startCuttingGrass();
-      }
-    }
-    if(doneCutting == 1 && cutting == 0){
-      Stop();
-    }
+    
+   
     if(turning == 1){ 
       stopRotateDegree();
       
@@ -199,12 +191,8 @@ void loop() {
         // }
         goForward(goSpeed, goSpeed2);
       }
-      //      if(cutting == 1 && doneCutting == 0){
-      //        startCuttingGrass();
-      //      }
     }
     
-  }
   
   if(searchingForDock == 1 && foundDock == 0){ //Dock zoeken
     // Serial.println("rotating");
@@ -259,12 +247,17 @@ void loop() {
     else if(data == "6"){
       Stop();
     }
-    else if(data == "7"){
+    else if(data == "7"){ //Draai 90 graden recths
       //Draai 90 graden
-      degreeToTurn = 1100; //Niet meer 90
+      degreeToTurn = degreeToTurn90;
+      rotateDegreeRight(goSpeed, goSpeed2);
+    }
+    else if(data == "8"){ //Draai 90 graden links
+      //Draai 90 graden
+      degreeToTurn = degreeToTurn90;
       rotateDegreeLeft(goSpeed, goSpeed2);
     }
-    else if(data == "8"){
+    else if(data == "9"){
       driveStraight(100, goSpeed);
     }
     else if(data == "t"){ // Begin berekeken opp
@@ -272,7 +265,7 @@ void loop() {
     }
     else if(data == "r"){ // Dock gevonden, maar ligt rechts
       if(calculatingField == 0){
-      //        Serial.println("FoundDock");
+      //Serial.println("FoundDock");
         foundDock = 1;
         // stopRotateDegree();
         degreeToTurn = 100;
@@ -282,7 +275,7 @@ void loop() {
     else if(data == "l"){ // Dock gevonden, maar ligt links
       Serial.println("received: " + String(data)); 
       if(calculatingField == 0){
-      //        Serial.println("FoundDock");
+      //Serial.println("FoundDock");
         foundDock = 1;
         // stopRotateDegree();
         degreeToTurn = 100;
@@ -428,46 +421,49 @@ void readPerimeters(){
   // Serial.println("SensorDataLeft: " + String(periDataLeft));
   interrupts();
 
+  frontPeriArray[arrayIndex%arraymax] = periDataFront;
+  leftPeriArray[arrayIndex%arraymax] = periDataLeft;
+  arrayIndex++;
+  int sumFront = 0;
+  int sumLeft = 0;
+  int arrayLength = sizeof(frontPeriArray) / sizeof(frontPeriArray[0]);
+  for (int i = 0; i < arrayLength; i++) {
+    sumFront += frontPeriArray[i]; // add the value of each element to the running total
+    sumLeft += leftPeriArray[i];
+  }
+  frontAvr = sumFront/arrayLength;
+  leftAvr = sumLeft/arrayLength;
+
+
+  Serial.println("avr is: " + String(frontAvr));
+
   if(running == 1){
-    frontPeriArray[arrayIndex%arraymax] = periDataFront;
-    leftPeriArray[arrayIndex%arraymax] = periDataLeft;
-    arrayIndex++;
-    int sumFront = 0;
-    int sumLeft = 0;
-    int arrayLength = sizeof(frontPeriArray) / sizeof(frontPeriArray[0]);
-    for (int i = 0; i < arrayLength; i++) {
-      sumFront += frontPeriArray[i]; // add the value of each element to the running total
-      sumLeft += leftPeriArray[i];
-    }
-    frontAvr = sumFront/arrayLength;
-    leftAvr = sumLeft/arrayLength;
-
-
-    // Serial.println("avr is: " + String(frontAvr));
-    if(frontAvr > 400){ // Van voor vast --> naar rechts
+    if(frontAvr > 100){ // Van voor vast --> naar rechts
       frontFreeState = frontNotFree;
-      degreeToTurn = degreeToTurn90*3;
+      // degreeToTurn = degreeToTurn90*3;
       
-      leftPeriSensitivity = 10;
+      leftPeriSensitivity = 5;
       rotateDegreeRight(goSpeed, goSpeed2);
     }
-    else if(frontAvr < 400){ // van voor NIET vast
+    else if(frontAvr < 20){ // van voor NIET vast
       if(periDataLeft >= leftPeriSensitivity){ // van voor NIET vast, maar links wel --> vooruit
         if(frontFreeState == frontNotFree && leftAvr > 400){
           frontFreeState = frontBackFree;
+          // Serial.println("heere");
         }
+        
         goForward(goSpeed, goSpeed2);
       }
       else if(periDataLeft < leftPeriSensitivity){ // links NIET MEER vast --> naar links
-        if(frontFreeState == frontNotFree){
+        if(frontFreeState == frontNotFree && frontAvr < 15 && frontAvr > 10){
           degreeToTurn = 5;
           // Serial.println("turnleft1");
-          rotateDegreeLeft(goSpeed, goSpeed2);
+          rotateLeft(goSpeed, goSpeed2);
         }
         else if(frontFreeState == frontFree){
           degreeToTurn = degreeToTurn90;
           // Serial.println("turnleft2: " + String(degreeToTurn));
-          rotateDegreeLeft(goSpeed, goSpeed2);
+          rotateLeft(goSpeed, goSpeed2);
         }
       }
       
@@ -481,25 +477,46 @@ void readPerimeters(){
   Also increase wheelpings1 and 2 and wheelPingsWhenStopped1 and 2 if needed.
 
 */
-void readEncoder(){ //Enkel H1 werkt goed
+void readEncoder(){ 
 
   wheelData1 = digitalRead(wheelPin1);
   wheelData2 = digitalRead(wheelPin2);
+  // Serial.println("wheeld2v: " + String(wheelData1) + " H2");
    
   if(wheelData1 == LOW && oldWheelData1 == HIGH){
     wheelpingsBlock1 = oldWheelData1;
 
     ++wheelPingsWhenStopped1;
-    Serial.println("wheeld: " + String(wheelData1) + " H1");
+    if(turningRight == 1){
+      correctTotalDegTurned();
+    }
+    // Serial.println("wheeld: " + String(wheelPingsWhenStopped1) + " H1");
   }
   if(wheelData2 == LOW && oldWheelData2 == HIGH){
     wheelpingsBlock2 = oldWheelData2;
   
     ++wheelPingsWhenStopped2;
-    Serial.println("wheeld2: " + String(wheelPingsWhenStopped2) + " H2");
+
+    if(turningLeft == 1){
+      correctTotalDegTurned();
+    }
+    // Serial.println("wheeld2: " + String(wheelPingsWhenStopped2) + " H2");
   }
+  
   oldWheelData1 = wheelData1;
   oldWheelData2 = wheelData2;
+}
+
+void correctTotalDegTurned(){
+   if(calculatingField == 1 && turning == 1){
+      if(turningRight == 1){
+        totalDegTurnedRight = totalDegTurnedRight + 1;
+      }
+      if(turningLeft == 1){
+        totalDegTurnedLeft = totalDegTurnedLeft + 1;
+      }
+      Serial.println("totaldeg2: " + String(totalDegTurnedRight));
+    }
 }
 
 /*
@@ -629,7 +646,13 @@ void goLeft(int motorSpeed1, int motorSpeed2){
   
 }
 void rotateLeft(int motorSpeed1, int motorSpeed2){
+  setValuesToZero();
+  turning = 1;
   running = 1;
+  stopedTurning = 0;
+  turningRight = 0;
+  turningLeft = 1;
+
   digitalWrite(in1, LOW);
   digitalWrite(in2, HIGH);
   digitalWrite(in3, LOW);
@@ -638,16 +661,14 @@ void rotateLeft(int motorSpeed1, int motorSpeed2){
   motorSpeed2 = speedVerify(motorSpeed2);
   analogWrite(enA, motorSpeed1);
   analogWrite(enB, motorSpeed2);
-  // Serial.print("rotate left:");
-  // Serial.println(motorSpeed1);
   
 }
 
 void degreeToPings(int deg){
-  degreeToTurn = degreeToTurn1 * deg;
+  degreeToTurn = degreeToTurn1 * deg; // or degreePer1Ping * deg
 }
 int pingsToDegree(int pings){
-  return pings/degreeToTurn1;
+  return pings*degreePer1Ping;
 }
 
 /**
@@ -659,27 +680,24 @@ int pingsToDegree(int pings){
   En heeft extra functies voor berekenen van oppervlakte.
 **/
 void stopRotateDegree(){
-  if(wheelPingsWhenStopped2 == degreeToTurn){ 
-    
-    if(calculatingField == 1){ //Berekenen opp
-      //      Serial.println("wheelpingsStraigth1: " + String(pingsWhenStraight1));
-          //  Serial.println("wheelpingsStraigth2: " + String(pingsWhenStraight2));
-      if(turningRight == 1){
-        totalDegTurned = totalDegTurned + wheelPingsWhenStopped2;
-      }
-      else if(turningRight == 0){
-        totalDegTurned = totalDegTurned - wheelPingsWhenStopped2;
-      }
-      
-    }
+  if(wheelPingsWhenStopped2 >= degreeToTurn){ 
+  
     if(moveMatrix == 1){
       moveMatrix = 0;
       Serial.write("Done matrix Turn");
     }
     // Serial.println("first is: " + String(wheelPingsWhenStopped2));
     stopedTurning = 1;
-    setValuesToZero();
     // Stop();
+    if(calculatingField == 1 && turning == 0){ //--> TODO
+      // if(frontFreeState = frontBackFree){
+        leftPeriSensitivity = 100;
+      // }
+      goForward(goSpeed, goSpeed2);
+    }
+    else if(calculatingField == 1 && turning == 1){
+      Stop();
+    }
   }
 }
 
@@ -687,12 +705,12 @@ void stopRotateDegree(){
   Links draaien in een bepaalde hoek.
 **/
 void rotateDegreeLeft(int motorSpeed1, int motorSpeed2){
-
   setValuesToZero();
   turning = 1;
   running = 1;
   stopedTurning = 0;
   turningRight = 0;
+  turningLeft = 1;
 
   digitalWrite(in1, LOW);
   digitalWrite(in2, HIGH);
@@ -702,8 +720,6 @@ void rotateDegreeLeft(int motorSpeed1, int motorSpeed2){
   motorSpeed2 = speedVerify(motorSpeed2);
   analogWrite(enA, motorSpeed1);
   analogWrite(enB, motorSpeed2);
-  // Serial.print("rotating 90 degrees left...");
-  // Serial.println(motorSpeed1);
 }
 
 /**
@@ -713,6 +729,7 @@ void rotateDegreeRight(int motorSpeed1, int motorSpeed2){
   setValuesToZero();
   turning = 1;
   turningRight = 1;
+  turningLeft = 0;
   running = 1;
   stopedTurning = 0;
 
@@ -735,8 +752,8 @@ void Stop(){
   analogWrite(enA, 0);
   analogWrite(enB, 0);
 
-  //  Serial.println("wheelpings1: " + String(wheelPingsWhenStopped1));
-   Serial.println("wheelpings2: " + String(wheelPingsWhenStopped2));
+  // Serial.println("wheelpingsStopped1: " + String(wheelPingsWhenStopped1));
+  // Serial.println("wheelpingsStopped2: " + String(wheelPingsWhenStopped2));
   setValuesToZero();
   
 }
@@ -754,6 +771,7 @@ void setValuesToZero(){
   running = 0;
   turning = 0;
   turningRight = 0;
+  turningLeft = 0;
   // stopedTurning = 0;
 }
 
