@@ -102,24 +102,10 @@ int wheelpingsBlock2 = 0;
 int totalDegTurnedRight = 0;
 int totalDegTurnedLeft = 0;
 
-//GPSf
-#include <Adafruit_GPS.h>
-#include <Adafruit_GPS.h>
-//We can now create our Software Serial object after including the library
-SoftwareSerial mySerial(11, 12);
-
-//And finally attach our Serial object pins to our GPS module
-Adafruit_GPS GPS(&mySerial);
-
 void setup() {
   
   Serial.begin(115200); //9600
-  GPS.begin(9600);
   Serial.setTimeout(1000);
-  //These lines configure the GPS Module
-  GPS.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCGGA); //Sets output to only RMC and GGA sentences
-  GPS.sendCommand(PMTK_SET_NMEA_UPDATE_1HZ); //Sets the output to 1/second. If you want you can go higher/lower
-  GPS.sendCommand(PGCMD_ANTENNA); //Can report if antenna is connected or not
   
   // pinMode(rxPin, INPUT);
   // pinMode(txPin, OUTPUT);
@@ -160,17 +146,6 @@ void setup() {
 }
 
 void loop() {
-
-
-  GPS.parse(GPS.lastNMEA()); //This is going to parse the last NMEA sentence the Arduino has received, breaking it down into its constituent parts.
-  GPS.newNMEAreceived(); //This will return a boolean TRUE/FALSE depending on the case.
-
-  // Serial.print("Fix: "); Serial.print((int)GPS.fix);
-  // Serial.print(" quality: "); Serial.println((int)GPS.fixquality);
-  if (GPS.fix) {
-  Serial.print("Angle: "); Serial.println(GPS.angle);
-  }
-
  
   float batteryVoltage = getBatteryStatus();
   readPerimeters();
@@ -469,31 +444,27 @@ void readPerimeters(){
       frontFreeState = frontNotFree;
       degreeToTurn = degreeToTurn90/10;
       
-      leftPeriSensitivity = 10;
+      leftPeriSensitivity = 0;
       rotateDegreeRight(goSpeed, goSpeed2);
     }
     else if(frontAvr < 20){ // van voor NIET vast
-      if(periDataLeft >= leftPeriSensitivity){ // van voor NIET vast, maar links wel --> vooruit
+      if(frontFreeState == frontFree && turningRight != 1){ //van voor en links vrij
+            degreeToTurn = degreeToTurn90;
+            rotateDegreeLeft(goSpeed, goSpeed2);
+          }
+      if(periDataLeft >= leftPeriSensitivity ){ // van voor NIET vast, maar links wel --> vooruit
         if(frontFreeState == frontNotFree && leftAvr >= 350){
           frontFreeState = frontBackFree;
-          // Serial.println("heere");
         }
-        
         goForward(goSpeed, goSpeed2);
       }
-      else if(periDataLeft < leftPeriSensitivity){ // links NIET MEER vast --> naar links
+      else if(periDataLeft < leftPeriSensitivity && turningRight != 1){ // links NIET MEER vast --> naar links
         if(frontFreeState == frontNotFree){
           degreeToTurn = 5;
           // Serial.println("turnleft1");
           rotateDegreeLeft(goSpeed, goSpeed2);
         }
-        if(frontFreeState == frontFree){
-          degreeToTurn = degreeToTurn90;
-          // Serial.println("turnleft2: " + String(degreeToTurn));
-          rotateDegreeLeft(goSpeed, goSpeed2);
-        }
       }
-      
     }
   }
 }
@@ -514,8 +485,9 @@ void readEncoder(){
     wheelpingsBlock1 = oldWheelData1;
 
     ++wheelPingsWhenStopped1;
+    
     // if(turningRight == 1){
-    //   correctTotalDegTurned();
+      correctTotalDegTurned();
     // }
     // Serial.println("wheeld: " + String(wheelPingsWhenStopped1) + " H1");
   }
@@ -525,28 +497,26 @@ void readEncoder(){
     ++wheelPingsWhenStopped2;
 
     // if(turningLeft == 1){
-    //   correctTotalDegTurned();
+      correctTotalDegTurned();
     // }
     // Serial.println("wheeld2: " + String(wheelPingsWhenStopped2) + " H2");
   }
-  if(turningLeft == 1 || turningRight == 1){
-      correctTotalDegTurned();
-    }
+  // if(turningLeft == 1 || turningRight == 1){
+      // correctTotalDegTurned();
+  //   }
   oldWheelData1 = wheelData1;
   oldWheelData2 = wheelData2;
 }
 
 void correctTotalDegTurned(){
-   if(calculatingField == 1 && turning == 1){
       if(turningRight == 1){
-        totalDegTurnedRight = totalDegTurnedRight + 1;
+        ++totalDegTurnedRight;
       }
       if(turningLeft == 1){
         // totalDegTurnedLeft = totalDegTurnedLeft + 1;
         totalDegTurnedRight = totalDegTurnedRight - 1;
       }
-      Serial.println("totaldeg2: " + String(totalDegTurnedRight));
-    }
+      // Serial.println("totaldeg2: " + String(totalDegTurnedRight));
 }
 
 /*
@@ -741,8 +711,8 @@ void rotateDegreeLeft(int motorSpeed1, int motorSpeed2){
   digitalWrite(in3, LOW);
   digitalWrite(in4, HIGH);
   motorSpeed1 = speedVerify(motorSpeed1);
-  motorSpeed2 = speedVerify(motorSpeed2);
-  analogWrite(enA, motorSpeed1);
+  motorSpeed2 = speedVerify(motorSpeed2/2);
+  // analogWrite(enA, motorSpeed1);
   analogWrite(enB, motorSpeed2);
 }
 
@@ -762,7 +732,7 @@ void rotateDegreeRight(int motorSpeed1, int motorSpeed2){
   digitalWrite(in3, HIGH);
   digitalWrite(in4, LOW);
   motorSpeed1 = speedVerify(motorSpeed1);
-  motorSpeed2 = speedVerify(motorSpeed2);
+  motorSpeed2 = speedVerify(motorSpeed2/2);
   analogWrite(enA, motorSpeed1);
   analogWrite(enB, motorSpeed2);
 }
