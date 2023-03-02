@@ -50,12 +50,13 @@ int turning = 0;
 int turningRight = 0;
 int turningLeft = 0;
 int degreeToTurn = 0;
-int degreeToTurn90 = 16; //was 900 nu 16
+int degreeToTurn90 = 40; //was 900 nu 16. Als enkel w1(linker) wordt gebruikt dan is het rond de 40
 int degreeToTurn1 = degreeToTurn90 / 90; //--> 0.17777...8
 int degreePer1Ping = 90 / degreeToTurn90; //--> 5.625
 int stopedTurning = 0; 
 int count = 0;
-int leftPeriSensitivity = 100;
+int normalLeftSensitivity = 150;
+int leftPeriSensitivity = normalLeftSensitivity;
 enum frontFreeStates{
   frontFree,
   frontNotFree,
@@ -63,12 +64,13 @@ enum frontFreeStates{
 };
 enum frontFreeStates frontFreeState;
 enum frontFreeStates frontNow;
+enum frontFreeStates frontBack;
 int arraymax = 10;
 int frontPeriArray[10];
 int arrayIndex = 0;
 int frontAvr = 0;
-int leftPeriArray[10];
-int leftAvr = 0;
+// int leftPeriArray[10];
+// int leftAvr = 0;
 
 //Battery
 const int analogInPin = A2; // Pin lezen batterij
@@ -138,6 +140,7 @@ void setup() {
 
   frontFreeState = frontFree;
   frontNow = frontFreeState;
+  frontBack = frontFree;
   calculatingField = 1;
   // goForward(goSpeed, goSpeed2);
   // driveStraight(100, 255);
@@ -150,23 +153,31 @@ void loop() {
   float batteryVoltage = getBatteryStatus();
   readPerimeters();
   readEncoder();
-  
+
   if(frontFreeState != frontNow){
     // Serial.println("Frontfree is: " + String(frontFreeState));
     frontNow = frontFreeState;
+    frontBack = frontBackFree;
     if(frontFreeState == frontBackFree){
       frontFreeState = frontFree;
-      leftPeriSensitivity = 100;
+      leftPeriSensitivity = normalLeftSensitivity;
+
+      Serial.println("degP: " + String(totalDegTurnedRight));
+      
       int totaldegRight = pingsToDegree(totalDegTurnedRight);
       calculatingField = 0;
-      Serial.println("degP: " + String(totalDegTurnedRight));
-      // Stop();
-      if(totalDegTurnedRight != 0){
-        Serial.println("deg: " + String(totaldegRight));
+      
+      if(totaldegRight != 0){
+        Serial.println("deg: " + String(totaldegRight/3.333));
         totalDegTurnedRight = 0;
       }
+      totalDegTurnedRight = 0;
      
       // goForward(goSpeed, goSpeed2);
+    }
+    else if(frontBack == frontBackFree && frontFreeState == frontFree){
+      Serial.println("Done turning.");
+      frontBack = frontFree;
     }
   }
     // if(wheelpingsBlock1 >= (N/4) - 4 || wheelpingsBlock1 <= (N/4) + 4){
@@ -185,11 +196,8 @@ void loop() {
     if(turning == 1){ 
       stopRotateDegree();
       
-      if(calculatingField == 1 && turning == 0){ //--> TODO
-        // if(frontFreeState == frontBackFree){
-          leftPeriSensitivity = 100;
-        // }
-        // Serial.println("hereee");
+      if(calculatingField == 1 && turning == 0){
+          leftPeriSensitivity = normalLeftSensitivity;
         goForward(goSpeed, goSpeed2);
       }
     }
@@ -423,17 +431,17 @@ void readPerimeters(){
   interrupts();
 
   frontPeriArray[arrayIndex%arraymax] = periDataFront;
-  leftPeriArray[arrayIndex%arraymax] = periDataLeft;
+  // leftPeriArray[arrayIndex%arraymax] = periDataLeft;
   arrayIndex++;
   int sumFront = 0;
   int sumLeft = 0;
   int arrayLength = sizeof(frontPeriArray) / sizeof(frontPeriArray[0]);
   for (int i = 0; i < arrayLength; i++) {
     sumFront += frontPeriArray[i]; // add the value of each element to the running total
-    sumLeft += leftPeriArray[i];
+    // sumLeft += leftPeriArray[i];
   }
   frontAvr = sumFront/arrayLength;
-  leftAvr = sumLeft/arrayLength;
+  // leftAvr = sumLeft/arrayLength;
 
 
   // Serial.println("avr is: " + String(frontAvr));
@@ -453,7 +461,7 @@ void readPerimeters(){
             rotateDegreeLeft(goSpeed, goSpeed2);
           }
       if(periDataLeft >= leftPeriSensitivity ){ // van voor NIET vast, maar links wel --> vooruit
-        if(frontFreeState == frontNotFree && leftAvr >= 350){
+        if(frontFreeState == frontNotFree && periDataLeft >= 350){ //normaal: frontFreeState == frontNotFree && leftAvr >= 350
           frontFreeState = frontBackFree;
         }
         goForward(goSpeed, goSpeed2);
@@ -731,8 +739,8 @@ void rotateDegreeRight(int motorSpeed1, int motorSpeed2){
   digitalWrite(in2, LOW);
   digitalWrite(in3, HIGH);
   digitalWrite(in4, LOW);
-  motorSpeed1 = speedVerify(motorSpeed1);
-  motorSpeed2 = speedVerify(motorSpeed2/2);
+  motorSpeed1 = speedVerify(200);
+  motorSpeed2 = speedVerify(motorSpeed2);
   analogWrite(enA, motorSpeed1);
   analogWrite(enB, motorSpeed2);
 }
@@ -766,6 +774,7 @@ void setValuesToZero(){
   turning = 0;
   turningRight = 0;
   turningLeft = 0;
+  
   // stopedTurning = 0;
 }
 
