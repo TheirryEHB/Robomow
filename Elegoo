@@ -29,6 +29,7 @@ int wheelPin1 = 9; //Pin voor data wiel 1 (linker wiel, oranje draad)
 int wheelPin2 = 10; //(rechter wiel, grijze draad)
 int wheelPingsWhenStopped1 = 0; // Aantal pings wanneer wiel 1 is gestopt
 int wheelPingsWhenStopped2 = 0; 
+int pingsWhenStraight = 0;
 int wheelData1 = 2; // Data weelencoder wiel 1
 int wheelData2 = 2; 
 int oldWheelData1 = 2; // Oude wieldata wiel 1 om zo te weten wanneer er nieuwe data binnen is gekomen
@@ -167,13 +168,13 @@ void loop() {
       int totaldegRight = pingsToDegree(totalDegTurnedRight);
       calculatingField = 0;
       
-      if(totaldegRight != 0){
-        Serial.println("deg: " + String(totaldegRight/3.333));
+      if(totaldegRight != 0 && pingsWhenStraight > N/2){
+        Serial.println("Degrees Turned: " + String(totaldegRight/3.333));
+        Serial.println("Distance Traveld: " + String(pingsWhenStraight));
         totalDegTurnedRight = 0;
       }
       totalDegTurnedRight = 0;
      
-      // goForward(goSpeed, goSpeed2);
     }
     else if(frontBack == frontBackFree && frontFreeState == frontFree){
       Serial.println("Done turning.");
@@ -493,25 +494,20 @@ void readEncoder(){
     wheelpingsBlock1 = oldWheelData1;
 
     ++wheelPingsWhenStopped1;
+    ++pingsWhenStraight;
+    correctTotalDegTurned();
     
-    // if(turningRight == 1){
-      correctTotalDegTurned();
-    // }
     // Serial.println("wheeld: " + String(wheelPingsWhenStopped1) + " H1");
   }
   if(wheelData2 == LOW && oldWheelData2 == HIGH){
     wheelpingsBlock2 = oldWheelData2;
   
     ++wheelPingsWhenStopped2;
-
-    // if(turningLeft == 1){
-      correctTotalDegTurned();
-    // }
+    ++pingsWhenStraight;
+    correctTotalDegTurned();
     // Serial.println("wheeld2: " + String(wheelPingsWhenStopped2) + " H2");
   }
-  // if(turningLeft == 1 || turningRight == 1){
-      // correctTotalDegTurned();
-  //   }
+
   oldWheelData1 = wheelData1;
   oldWheelData2 = wheelData2;
 }
@@ -521,7 +517,6 @@ void correctTotalDegTurned(){
         ++totalDegTurnedRight;
       }
       if(turningLeft == 1){
-        // totalDegTurnedLeft = totalDegTurnedLeft + 1;
         totalDegTurnedRight = totalDegTurnedRight - 1;
       }
       // Serial.println("totaldeg2: " + String(totalDegTurnedRight));
