@@ -28,25 +28,23 @@ connectedState = Connected.NotConnected
 # passkey = "1234"
 
 COM = "COM5"
-# Voor laptop outgoing: COM10(spp dev), incomming COM9
+# Voor laptop Bluetooth outgoing: COM10(spp dev), incoming COM9
 # laptop usb COM5
-# Voor desktop outgoing: COM11(spp dev), incomming COM10
+# Voor desktop Bluetooth outgoing: COM11(spp dev), incoming COM10
 BAUD = 115200
-SerialPort = serial.Serial('/dev/ttyACM0',  baudrate=BAUD, timeout=0.1)
+SerialPort = serial.Serial(COM,  BAUD, timeout=0.1)
 connectedState = Connected.Connected
-# time.sleep(10)
-# SerialPort.write(bytes("2", 'utf-8'))
+SerialPort.close()
+SerialPort.open()
+time.sleep(2)
+
 
 def sendData():
     global toSend, SerialPort
-    SerialPort.close()
-    SerialPort.open()
     toSendString = str(toSend)+"\n"
     print(toSendString)
-    # SerialPort.write(toSendString.encode("utf-8"))
     SerialPort.write(bytes(toSendString, 'utf-8'))
     toSend = ""
-    # SerialPort.close()
 
 def readData():
     global toSend
@@ -55,35 +53,27 @@ def readData():
             sendData()
         else:
             try:
-                # SerialPort.open()
                 incomingData = SerialPort.readline()
                 if incomingData:
-                    print(incomingData)
                     decodedData = incomingData.decode('utf-8')
-                    print(decodedData)
+                    inArr = []
+                    if "Distance Traveld: " in decodedData:
+                        inArr[0] = decodedData[18:-1]
                     if "Degrees Turned: " in decodedData:
-                        print(decodedData[15:-1])
-                        angleArray.append(decodedData[15:-1])
+                        inArr[1] = decodedData[16:-1]
+                        angleArray.append(inArr)
                     elif "Done turning." in decodedData:
-                        toSend = str(6)
-                        break
-
+                        if len(angleArray) > 10:
+                            toSend = str(6)
+                            break
                 time.sleep(0.01)
-                # OutgoingData=input('> ')
-                # SerialPort.write(bytes("OutgoingData",'utf-8'))
-                # SerialPort.write(bytes("2",'utf-8'))
             except KeyboardInterrupt:
                 print("Closing and exiting the program")
                 SerialPort.close()
                 sys.exit(0)
-        # SerialPort.close()
 
 
 if connectedState == Connected.Connected:
-    # global toSend
     print("Connected")
-
-    # sendData(str(2))
-    # time.sleep(5)
     toSend = 2
     readData()
