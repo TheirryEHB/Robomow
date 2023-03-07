@@ -23,7 +23,7 @@ detector = cv2.QRCodeDetector()
 countCalc = 0
 # Calculate distance to shape
 tempFL = 645.3333333333334
-pingsPerRot = 3410
+pingsPerRot = 57
 
 name = 'HC-05'
 serverMAC = 'E0-D4-64-C1-97-E1'  # mac bl 98:d3:31:f6:77:ff #mac pc E0-D4-64-C1-97-E1
