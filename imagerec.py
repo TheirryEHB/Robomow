@@ -1,4 +1,4 @@
-# import cv2
+import cv2
 import numpy as np
 import requests
 from matplotlib import pyplot as plt
@@ -9,29 +9,10 @@ import sys
 import queue
 
 bigMatrix = []
-
-# esp8266 communication
-import socket
-import urllib.request
-
-# https://medium.com/analytics-vidhya/esp8266-python-connection-in-arduino-based-system-5d4a308bd79b
-# ip = "192.168.0.165"
-# port = 80
-# conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-# conn2 = ""
-# conn.connect((ip, port))
-# conn.send("6".encode())
-# conn.bind(('', port))
-# conn.connect((ip, port))
-# conn.listen()
-# url = "http://"+ip
-# nnn = urllib.request.urlopen(url).read()
-# nnn = nnn.decode("utf-8")
-# print(nnn)
 nextN = []
 
-# print(cv2.__version__)
-# detector = cv2.QRCodeDetector()
+print(cv2.__version__)
+detector = cv2.QRCodeDetector()
 
 # https://www.instructables.com/Raspberry-Pi-Arduino-Serial-Communication/
 # https://www.arrow.com/en/research-and-events/articles/raspberry-pi-to-arduino-serial-communication-via-usb
@@ -50,317 +31,40 @@ hostMac = '98:d3:31:f6:77:ff'
 port = 11
 passkey = "1234"
 
-# blu_send = socket.socket(socket.AF_BLUETOOTH, socket.SOCK_STREAM, socket.BTPROTO_RFCOMM)
-# blu_send.bind((serverMAC, port))
-# blu_send.send(bytes("2\n", 'UTF-8'))
 import signal
 
-
-def signal_handler(signal, frame):
-    print("closing program")
-    SerialPort.close()
-    sys.exit(0)
-
-
-COM = "COM11"
-BAUD = 9600
-SerialPort = serial.Serial(COM, BAUD, timeout=5)
-SerialPort.close()
-SerialPort.open()
-time.sleep(10)
-
-while 1:
-    # try:
-        # OutgoingData = input('> ')
-        # SerialPort.write(str("2\n").encode("utf-8"))
-    # except KeyboardInterrupt:
-    #     print("Closing and exiting the program")
-    #     SerialPort.close()
-    #     sys.exit(0)
-    IncomingData = SerialPort.readline()
-    if IncomingData:
-        print(IncomingData.decode('utf-8'))
-    time.sleep(0.01)
-
-## Pathfinding
-arrayHoogte = []
-arrayBasis = []
-currentPosRob = [0, 0]
-shortestRout = []
-neighbours = []
-closestNeighbour = [1, 1]
-weight = 0
-turnArray = []
-
-## Orientation
-currOrientation = 0
-degreesToTurn = 0
-
-testHeight = [0, 1, 2, 3, 4, 5, 6]
-testBase = [0, 1, 2, 3, 4, 5, 6]
-matrix = []
+# def signal_handler(signal, frame):
+#     print("closing program")
+#     SerialPort.close()
+#     sys.exit(0)
+#
+#
+# COM = "COM11"
+# BAUD = 9600
+# SerialPort = serial.Serial(COM, BAUD, timeout=5)
+# SerialPort.close()
+# SerialPort.open()
+# time.sleep(10)
 
 
-def changeOrLeft(degree):
-    #     if(currOrientatiion+degree <= 180):
-    #         currOrientation = currOrientation + degree
-    #     if(currOrientatiion+degree > 180):
-    #         currOrientatiion = -90 - degree
-    global currOrientation
-    if currOrientation + degree < 360:
-        currOrientation = currOrientation + degree
-    if currOrientation + degree >= 360:
-        currOrientation = abs(degree - (360 - currOrientation))
-    # print(currOrientation)
 
 
-def changeOrRight(degree):
-    global currOrientation
-    if currOrientation - degree >= 0:
-        currOrientation = currOrientation - degree
-    if currOrientation - degree < 0:
-        currOrientation = 360 - (degree - currOrientation)
-    # print(currOrientation)
-
-
-# ser.write(b'turn left: ' + str(degreesToTurn).encode("utf-8")+ b'\n')
-
-def matrixGoRight():
-    if currOrientation < 270:  # turn left until looking at right side field
-        #         degreesToTurn = 270 - currOrientation
-        degreesToTurn = 270 - currOrientation
-        changeOrRight(360 - degreesToTurn)
-        stri = "turn left: " + str(degreesToTurn)
-        sendTurnData(stri)
-        # ser.write(b'turn left: ' + str(degreesToTurn).encode("utf-8") + b'\n')
-        # print("R turn left: " + str(degreesToTurn))
-    # turn degrees to left
-    elif currOrientation >= 270:
-        degreesToTurn = currOrientation - 270
-        changeOrRight(degreesToTurn)
-        stri = "turn right: " + str(degreesToTurn)
-        sendTurnData(stri)
-        # ser.write(b'turn right: ' + str(degreesToTurn).encode("utf-8") + b'\n')
-        # print("R turn right: " + str(degreesToTurn))
-    # turn degrees to right
-
-
-def matrixGoLeft():
-    if currOrientation < 90:
-        degreesToTurn = 90 - currOrientation
-        changeOrLeft(degreesToTurn)
-        stri = "turn right: " + str(degreesToTurn)
-        sendTurnData(stri)
-        # ser.write(b'turn right: ' + str(degreesToTurn).encode("utf-8") + b'\n')
-        # print("L turn right: " + str(degreesToTurn))
-    # turn degrees to right
-    elif currOrientation >= 90:
-        degreesToTurn = currOrientation - 90
-        changeOrLeft(degreesToTurn)
-        stri = "turn left: " + str(degreesToTurn)
-        sendTurnData(stri)
-        # ser.write(b'turn left: ' + str(degreesToTurn).encode("utf-8") + b'\n')
-        # print("L turn left: " + str(degreesToTurn))
-
-
-# turn degrees to left
-
-def matrixGoForward():
-    if currOrientation > 45 and currOrientation < 315:
-        degreesToTurn = 360 - currOrientation
-        changeOrLeft(degreesToTurn)
-        stri = "turn left: " + str(degreesToTurn)
-        sendTurnData(stri)
-        # ser.write(b'turn left: ' + str(degreesToTurn).encode("utf-8") + b'\n')
-    else:
-        changeOrLeft(0)
-        stri = "turn left: " + str(0)
-        sendTurnData(stri)
-        # ser.write(b'turn left: ' + b'0' + b'\n')
-        # print("turn hella left: " + str(degreesToTurn))
-
-
-# turn degrees to left
-
-def matrixGoBack():
-    if currOrientation < 180:
-        degreesToTurn = 180 - currOrientation
-        changeOrLeft(degreesToTurn)
-        stri = "turn left: " + str(degreesToTurn)
-        sendTurnData(stri)
-        # print("B turn left: " + str(degreesToTurn))
-        # turn degrees to left
-    elif currOrientation >= 180:
-        degreesToTurn = currOrientation - 180
-        changeOrLeft(degreesToTurn)
-        stri = "turn right: " + str(degreesToTurn)
-        sendTurnData(stri)
-        # print("B turn right: " + str(degreesToTurn))
-        # turn degrees to right
-
-
-def calcMatrixGoDirection(pointToGo):
-    #     print(currentPosRob)
-    if pointToGo[1] == currentPosRob[1]:  # turn left or right
-        if pointToGo[0] > currentPosRob[0]:
-            matrixGoRight()
-        elif pointToGo[0] < currentPosRob[0]:
-            matrixGoLeft()
-    if pointToGo[0] == currentPosRob[0]:  # go forward or back
-        if pointToGo[1] > currentPosRob[1]:
-            matrixGoForward()
-        if pointToGo[1] < currentPosRob[1]:
-            matrixGoBack()
-
-
-###
-# Make matrix
-###
-def makeMatrix():
-    for i in range(len(testBase)):
-        natr = []
-        for a in range(len(testHeight)):
-            natr.append([testBase[i], testHeight[a]])
-        matrix.append(natr)
-
-
-def sendTurnData(strr):
-    turnArray.append(strr)
-
-
-def nextDirections():
-    if (len(turnArray) > 0):
-        # print(turnArray[0])
-        # blu_send.send((turnArray[0]+"\r").encode())
-        turnArray.pop(0)
-
-
-makeMatrix()
-
-
-# matrix[3][4] = "*"
-
-# https://www.lavivienpost.com/shortest-path-between-cells-in-matrix-code/#:~:text=Shortest%20path%20in%20matrix%20is,starts%20from%20the%20source%20node.
-class Cell:
-    def __init__(self, x, y, dist, prev):
-        self.x = x
-        self.y = y
-        self.dist = dist  # distance to start
-        self.prev = prev  # parent cell in the path
-
-    def __str__(self):
-        return "(" + str(self.x) + "," + str(self.y) + ")"
-
-
-class ShortestPathBetweenCellsBFS:
-    # BFS, Time O(n^2), Space O(n^2)
-    def shortestPath(self, matrix, start, end):
-        sx = start[0]
-        sy = start[1]
-        dx = end[0]
-        dy = end[1]
-        # if start or end value is 0, return
-        if matrix[sx][sy] == 0 or matrix[dx][dy] == 0:
-            print("There is no path.")
-            return
-        # initialize the cells
-        m = len(matrix)
-        n = len(matrix[0])
-        cells = []
-        for i in range(0, m):
-            row = []
-            for j in range(0, n):
-                if matrix[i][j] != 0:
-                    row.append(Cell(i, j, sys.maxsize, None))
-                else:
-                    row.append(None)
-            cells.append(row)
-            # breadth first search
-        queue = []
-        src = cells[sx][sy]
-        src.dist = 0
-        queue.append(src)
-        dest = None
-        p = queue.pop(0)
-        while p != None:
-            # find destination
-            if p.x == dx and p.y == dy:
-                dest = p
-                break
-                # moving up
-            self.visit(cells, queue, p.x - 1, p.y, p)
-            # moving left
-            self.visit(cells, queue, p.x, p.y - 1, p)
-            # moving down
-            self.visit(cells, queue, p.x + 1, p.y, p)
-            # moving right
-            self.visit(cells, queue, p.x, p.y + 1, p)
-            if len(queue) > 0:
-                p = queue.pop(0)
-            else:
-                p = None
-                # compose the path if path exists
-        if dest == None:
-            print("there is no path.")
-            return
-        else:
-            path = []
-            p = dest
-            while p != None:
-                path.insert(0, p)
-                p = p.prev
-            for i in path:
-                shortestRout.append([i.x, i.y])
-
-    # function to update cell visiting status, Time O(1), Space O(1)
-    def visit(self, cells, queue, x, y, parent):
-        # out of boundary
-        if x < 0 or x >= len(cells) or y < 0 or y >= len(cells[0]) or cells[x][y] == None:
-            return
-        # update distance, and previous node
-        dist = parent.dist + 1
-        p = cells[x][y]
-        if dist < p.dist:
-            p.dist = dist
-            p.prev = parent
-            queue.append(p)
-
-
-def calcShortestRoute():
-    global currentPosRob
-    myObj = ShortestPathBetweenCellsBFS()
-    # case1, there is no path
-    start = [3, 2]
-    currentPosRob = start
-    end = [4, 4]
-    #     print(matrix)
-    # print(matrix[0])
-    print("case 1: ")
-    myObj.shortestPath(matrix, start, end)
-    print(shortestRout)
-    for i in shortestRout:
-        if i != currentPosRob:
-            calcMatrixGoDirection(i)
-            currentPosRob = i
-
-
-calcShortestRoute()
 
 
 ###
 # Het centrum van de gevonden shapes vinden.
 ###
-# def getCenterContour(frame):
-#     # https://www.geeksforgeeks.org/python-opencv-find-center-of-contour/
-#     # https://pyimagesearch.com/2016/02/01/opencv-center-of-contour/
-#     M = cv2.moments(cnt)
-#     if M['m00'] != 0:
-#         cx = int(M['m10'] / M['m00'])
-#         cy = int(M['m01'] / M['m00'])
-#         cv2.circle(frame, (cx, cy), 7, (0, 0, 255), -1)
-#         cv2.putText(frame, "center", (cx - 20, cy - 20),
-#                     cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2)
-#         return cx, cy
+def getCenterContour(frame):
+    # https://www.geeksforgeeks.org/python-opencv-find-center-of-contour/
+    # https://pyimagesearch.com/2016/02/01/opencv-center-of-contour/
+    M = cv2.moments(cnt)
+    if M['m00'] != 0:
+        cx = int(M['m10'] / M['m00'])
+        cy = int(M['m01'] / M['m00'])
+        cv2.circle(frame, (cx, cy), 7, (0, 0, 255), -1)
+        cv2.putText(frame, "center", (cx - 20, cy - 20),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2)
+        return cx, cy
 
 
 ###
@@ -423,26 +127,6 @@ def calcDistanceToCam(widthInPixels):
 
 
 ###
-# Maken matrix van oppervlakte
-###
-def makeMatrixEven(ar1, ar2):
-    if len(ar1) > len(ar2):
-        for i in range(0, len(ar1) - len(ar2)):
-            ar2.append("*")
-    if len(ar2) > len(ar1):
-        for i in range(0, len(ar2) - len(ar1)):
-            ar1.append("*")
-    weight = len(ar1)
-
-
-def makeBigm():
-    global bigMatrix
-    s = (1000, 1000)
-    bigMatrix = np.zeros(s, dtype=int)
-    bigMatrix[1:10, 0] = 1
-
-
-###
 # Beeldherkenning gedeelte.
 ###
 def imageRec():
@@ -451,153 +135,149 @@ def imageRec():
 
     while True:
         # Read arduino reply
-        # if ser.in_waiting > 0:
-        #     line = ser.readline().decode('utf-8').rstrip()
-        #     print(line)
-        #     if line == "doneCirc":
-        #         countCalc = 0
-        #     if "pings1: " in line:
-        #         pings = line[8:]
-        #         cels1 = math.floor(int(pings) / (pingsPerRot / 4))
-        #         #                 print(cels1)
-        #         for i in range(0, cels1 + 1):
-        #             arrayHoogte.append("H" + str(i))
-        #         currentPosRob[1] = arrayHoogte[len(arrayHoogte) - 1]
+        #  if ser.in_waiting > 0:
+        #      line = ser.readline().decode('utf-8').rstrip()
+        #      print(line)
+        #      if line == "doneCirc":
+        #          countCalc = 0
+        #      if "pings1: " in line:
+        #          pings = line[8:]
+        #          cels1 = math.floor(int(pings) / (pingsPerRot / 4))
+        #          #                 print(cels1)
+        #          for i in range(0, cels1 + 1):
+        #              arrayHoogte.append("H" + str(i))
+        #          currentPosRob[1] = arrayHoogte[len(arrayHoogte) - 1]
         #
-        #     if "pings2: " in line:
-        #         pings = line[8:]
-        #         cels2 = math.floor(int(pings) / (pingsPerRot / 4))
-        #         for i in range(0, cels2 + 1):
-        #             arrayBasis.append("B" + str(i))
-        #         currentPosRob[0] = arrayBasis[len(arrayBasis) - 1]
-        #         makeMatrixEven(arrayHoogte, arrayBasis)
-        #         print(arrayBasis)
-        #         print(arrayHoogte)
-        #                 cap.release()
+        #      if "pings2: " in line:
+        #          pings = line[8:]
+        #          cels2 = math.floor(int(pings) / (pingsPerRot / 4))
+        #          for i in range(0, cels2 + 1):
+        #              arrayBasis.append("B" + str(i))
+        #          currentPosRob[0] = arrayBasis[len(arrayBasis) - 1]
+        #          makeMatrixEven(arrayHoogte, arrayBasis)
+        #          print(arrayBasis)
+        #          print(arrayHoogte)
+        #                  cap.release()
 
-        # conn.listen()
-        # (clientsocket, address) = conn.accept()
-        # while 1:
-        #     data = clientsocket.recv(128)
-        #     datastr = buffer + data.decode('utf-8')
-        #     split = datastr.split("\n")
-        #     buffer = split[-1]
-        #     print(split[:-1])
+         conn.listen()
+         (clientsocket, address) = conn.accept()
+         while 1:
+             data = clientsocket.recv(128)
+             datastr = buffer + data.decode('utf-8')
+             split = datastr.split("\n")
+             buffer = split[-1]
+             print(split[:-1])
 
-        # _, frame = cap.read()
-        # hsv_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-        # # https://www.geeksforgeeks.org/webcam-qr-code-scanner-using-opencv/
-        # data, bbox, _ = detector.detectAndDecode(frame)
-        #
-        # if data == "https://www.linkedin.com/in/thierry-klougbo-880b071b1/":
-        #     if countCalc == 0:
-        #         calcCirc()
-        #         countCalc = +1
-        #
-        # #     if(countCalc < 3):
-        # #         calcCirc()
-        #
-        # # Blue color
-        # low_blue = np.array([94, 80, 2])
-        # high_blue = np.array([126, 255, 255])
-        # blurred = cv2.GaussianBlur(hsv_frame, (7, 7), 0)
-        # blue_mask = cv2.inRange(hsv_frame, low_blue, high_blue)
-        # result_blue = cv2.bitwise_and(frame, frame, mask=blue_mask)
-        #
-        # # Center of entire frame
-        # # https://stackoverflow.com/questions/53029540/find-centroid-coordinate-of-whole-frame-in-opencv
-        # (h, w) = result_blue.shape[:2]  # w:image-width and h:image-height
-        # cv2.circle(result_blue, (w // 2, h // 2), 7, (255, 255, 255), -1)
+         _, frame = cap.read()
+         hsv_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+         # https://www.geeksforgeeks.org/webcam-qr-code-scanner-using-opencv/
+         data, bbox, _ = detector.detectAndDecode(frame)
+
+         if data == "https://www.linkedin.com/in/thierry-klougbo-880b071b1/":
+             if countCalc == 0:
+                 calcCirc()
+                 countCalc = +1
+
+         #     if(countCalc < 3):
+         #         calcCirc()
+
+         # Blue color
+         low_blue = np.array([94, 80, 2])
+         high_blue = np.array([126, 255, 255])
+         blurred = cv2.GaussianBlur(hsv_frame, (7, 7), 0)
+         blue_mask = cv2.inRange(hsv_frame, low_blue, high_blue)
+         result_blue = cv2.bitwise_and(frame, frame, mask=blue_mask)
+
+         # Center of entire frame
+         # https://stackoverflow.com/questions/53029540/find-centroid-coordinate-of-whole-frame-in-opencv
+         (h, w) = result_blue.shape[:2]  # w:image-width and h:image-height
+         cv2.circle(result_blue, (w // 2, h // 2), 7, (255, 255, 255), -1)
 
         # Shape recognition
         # https://pysource.com/2018/12/29/real-time-shape-detection-opencv-with-python-3/
         # https://pysource.com/2018/03/01/find-and-draw-contours-opencv-3-4-with-python-3-tutorial-19/
-        # kernel = np.ones((5, 5), np.uint8)
-        # mask = cv2.erode(blue_mask, kernel)
-        # contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-        #
-        # for cnt in contours:
-        #     area = cv2.contourArea(cnt)
-        #     approx = cv2.approxPolyDP(cnt, 0.02 * cv2.arcLength(cnt, True), True)
-        #     x = approx.ravel()[0]
-        #     y = approx.ravel()[1]
-        #
-        #     if area > 400:
-        #         cv2.drawContours(result_blue, [approx], 0, (0, 0, 0), 5)
-        #         if len(approx) == 3:
-        #             cv2.putText(result_blue, "Triangle", (x, y), 3, 1, (255, 255, 255))
-        #             if countCalc == 0:
-        #                 # calc distance to travel
-        #
-        #                 # second method calculate distance to travel
-        #                 ## get contour sizes
-        #                 xt, yt, wt, ht = cv2.boundingRect(cnt)
-        #                 #                     cv2.putText(result_blue, str(wt), (xt,yt), 3, 1, (255, 255, 255))
-        #                 ndis = calcDistanceToCam(wt)
-        #                 print("str dis: " + str(ndis))
-        #                 #                     calcDisToShape(cnt)
-        #
-        #                 # calc distance to turn
-        #                 centerShape = getCenterContour(result_blue)
-        #                 turnDis = distanceCalculate((w // 2, h // 2), centerShape)
-        #                 print("turndis: " + str(turnDis))
-        #                 if ndis > 50:
-        #                     if turnDis >= 51:
-        #                         if centerShape[0] >= 340:
-        #                             turnRight()
-        #                             # Wait for 300milliseconds
-        #                             # time.sleep(0.500)
-        #                         if centerShape[0] < 340:
-        #                             turnLeft()
-        #                             # time.sleep(0.500)
-        #                     elif turnDis < 25:
-        #                         if ndis > 10:
-        #                             # ser.write(b'2')
-        #                             print("TODO")
-        #                         elif ndis <= 10:
-        #                             # ser.write(b'6')
-        #                             print("TODO")
-        #                 elif ndis <= 50:
-        #                     if turnDis >= 225:
-        #                         if centerShape[0] >= 353:
-        #                             turnRight()
-        #                             # Wait for 300milliseconds
-        #                             # time.sleep(0.500)
-        #                         if centerShape[0] < 353:
-        #                             turnLeft()
-        #                             # time.sleep(0.500)
-        #                     elif turnDis < 225:
-        #                         if ndis > 25:
-        #                             # ser.write(b'2')
-        print("TODO")
-    #                 elif ndis <= 25:
-    #                     # ser.write(b'6')
-    #                     print("TODO")
-    #
-    #
-    # elif len(approx) == 4:
-    #     cv2.putText(result_blue, "Rectangle", (x, y), 3, 1, (255, 255, 255))
-    #                 xt,yt,wt,ht = cv2.boundingRect(cnt)
-    #                 print(str(wt))
-    #                 cv2.putText(result_blue, str(wt), (x,y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (36,255,12), 2)
-    #                 cv2.rectangle(result_blue, (xt, yt), (xt + wt, yt + ht), (36,255,12), 1)
-    #                 calcFocalLength()
+         kernel = np.ones((5, 5), np.uint8)
+         mask = cv2.erode(blue_mask, kernel)
+         contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
-    #                 cv2.putText(result_blue, str(wt), (xt,yt), 3, 1, (255, 255, 255))
-    #                 if(countCalc == 0):
-    #                     calcCirc(countCalc)
-    #                     countCalc =+1
-    #                 #centerShape = getCenterContour(result_blue)
-    #             elif 10 < len(approx) < 20:
-    #                 cv2.putText(result_blue, "Circle", (x, y), 3, 1, (255, 255, 255))
+         for cnt in contours:
+             area = cv2.contourArea(cnt)
+             approx = cv2.approxPolyDP(cnt, 0.02 * cv2.arcLength(cnt, True), True)
+             x = approx.ravel()[0]
+             y = approx.ravel()[1]
 
-    # Show results
-    # cv2.imshow("Frame", frame)
-    # # cv2.imshow("Blue", result_blue)
-    #
-    # key = cv2.waitKey(1)
-    # if key == 27:
-    #     break
+             if area > 400:
+                 cv2.drawContours(result_blue, [approx], 0, (0, 0, 0), 5)
+                 if len(approx) == 3:
+                     cv2.putText(result_blue, "Triangle", (x, y), 3, 1, (255, 255, 255))
+                     if countCalc == 0:
+                         # calc distance to travel
+
+                         # second method calculate distance to travel
+                         ## get contour sizes
+                         xt, yt, wt, ht = cv2.boundingRect(cnt)
+                         #                     cv2.putText(result_blue, str(wt), (xt,yt), 3, 1, (255, 255, 255))
+                         ndis = calcDistanceToCam(wt)
+                         print("str dis: " + str(ndis))
+                         #                     calcDisToShape(cnt)
+
+                         # calc distance to turn
+                         centerShape = getCenterContour(result_blue)
+                         turnDis = distanceCalculate((w // 2, h // 2), centerShape)
+                         print("turndis: " + str(turnDis))
+                         if ndis > 50:
+                             if turnDis >= 51:
+                                 if centerShape[0] >= 340:
+                                     turnRight()
+                                     # Wait for 300milliseconds
+                                     # time.sleep(0.500)
+                                 if centerShape[0] < 340:
+                                     turnLeft()
+                                     # time.sleep(0.500)
+                             elif turnDis < 25:
+                                 if ndis > 10:
+                                     # ser.write(b'2')
+                                     print("TODO")
+                                 elif ndis <= 10:
+                                     # ser.write(b'6')
+                                     print("TODO")
+                         elif ndis <= 50:
+                             if turnDis >= 225:
+                                 if centerShape[0] >= 353:
+                                     turnRight()
+                                     # Wait for 300milliseconds
+                                     # time.sleep(0.500)
+                                 if centerShape[0] < 353:
+                                     turnLeft()
+                                     # time.sleep(0.500)
+                             elif turnDis < 225:
+                                 if ndis > 25:
+                                     ser.write(b'2')
+                     #    print("TODO")
+                     elif ndis <= 25:
+                         ser.write(b'6')
+                     #     print("TODO")
+
+
+                 elif len(approx) == 4:
+                     cv2.putText(result_blue, "Rectangle", (x, y), 3, 1, (255, 255, 255))
+                     xt,yt,wt,ht = cv2.boundingRect(cnt)
+                     print(str(wt))
+                     cv2.putText(result_blue, str(wt), (x,y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (36,255,12), 2)
+                     cv2.rectangle(result_blue, (xt, yt), (xt + wt, yt + ht), (36,255,12), 1)
+                     calcFocalLength()
+
+                     cv2.putText(result_blue, str(wt), (xt,yt), 3, 1, (255, 255, 255))
+                     if(countCalc == 0):
+                         calcCirc(countCalc)
+                         countCalc =+1
+                    #centerShape = getCenterContour(result_blue)
+                     elif 10 < len(approx) < 20:
+                        cv2.putText(result_blue, "Circle", (x, y), 3, 1, (255, 255, 255))
+
+             cv2.imshow("Frame, frame")
+
+
 
 # while True:
 #     # Read arduino reply
